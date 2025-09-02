@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ASHRAF</title>
+<meta name="description" content="Projects, notes, media, and everything about me." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<link rel="icon" type="image/png" href="assets/img/logo-black.png" />
+<link rel="apple-touch-icon" href="assets/img/logo-black.png" />
+
+<meta property="og:title" content="Ashraf — Projects, notes, and personal hub">
+<meta property="og:description" content="Portfolio + knowledge base + changelog of my life. I build in public.">
+<meta property="og:image" content="assets/img/hero-banner.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ashraf — Personal Hub">
+<meta name="twitter:description" content="Projects, notes, media, and everything about me.">
+<meta name="twitter:image" content="assets/img/hero-banner.png">
+
+<style>
+  :root{
+    --bg:#0b0d10; --bg-alt:#111418; --text:#e8edf2; --muted:#9aa7b3;
+    --brand:#4f7cff; --accent:#10b981; --card:#151a21; --edge:#202733;
+    --shadow:0 10px 30px rgba(0,0,0,.35); --radius:16px; --maxw:1100px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{--bg:#f7f9fc; --bg-alt:#fff; --text:#0f1720; --muted:#5b6b7a;
+      --card:#ffffff; --edge:#e8eef5; --shadow:0 10px 30px rgba(16,24,40,.08);}
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:linear-gradient(180deg,var(--bg),var(--bg-alt));color:var(--text)}
+  a{color:var(--brand);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:var(--maxw);margin-inline:auto;padding:24px}
+
+  /* Background */
+  #fx-canvas{position:fixed;inset:0;z-index:-1;background:
+    radial-gradient(1200px 800px at 80% -20%,#4f7cff18,transparent),
+    radial-gradient(1000px 700px at -10% 120%,#10b98118,transparent);}
+  @media (prefers-reduced-motion: reduce){#fx-canvas{display:none}}
+
+  header.site{position:sticky;top:0;backdrop-filter:saturate(140%) blur(8px);
+    background:color-mix(in hsl,var(--bg-alt) 80%, transparent);
+    border-bottom:1px solid var(--edge);z-index:10}
+  nav.top{display:flex;gap:12px;align-items:center;justify-content:space-between}
+  .brand{display:flex;gap:12px;align-items:center}
+  .brand img{width:40px;height:40px;border-radius:12px;box-shadow:var(--shadow);object-fit:cover}
+  .brand h1{font-size:18px;margin:0}
+  .navlinks{display:flex;gap:8px;flex-wrap:wrap}
+  .navlinks a{padding:8px 12px;border-radius:999px;background:var(--card);border:1px solid var(--edge)}
+  .navlinks a[aria-current="page"]{outline:2px solid var(--brand)}
+  .navlinks a:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+
+  .card{background:var(--card);border:1px solid var(--edge);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:linear-gradient(180deg,var(--bg-alt),var(--card));border:1px solid var(--edge);font-size:12px}
+  .muted{color:var(--muted)}
+
+  /* Individual section layout */
+  main{min-height:calc(100vh - 70px)}
+  section{display:none;padding:28px 0}
+  section.active{display:block}
+  .hero{padding:48px 0;display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  .kpis .mini{padding:14px;border-radius:12px;border:1px dashed var(--edge)}
+  .hero h2{font-size:40px;line-height:1.1;margin:0 0 8px}
+  .grid{display:grid;gap:20px}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+  .project{display:flex;flex-direction:column;gap:10px;padding:18px}
+  .tag{font-size:12px;background:var(--bg-alt);padding:6px 10px;border-radius:999px;border:1px solid var(--edge)}
+  .list{display:flex;flex-direction:column;gap:10px}
+  .list .row{display:flex;gap:14px;align-items:start;padding:14px;border-radius:12px;border:1px solid var(--edge);background:var(--bg-alt)}
+  .row time{font-variant-numeric:tabular-nums;color:var(--muted)}
+  .media{aspect-ratio:16/10;border-radius:12px;overflow:hidden;border:1px solid var(--edge)}
+  .media img{width:100%;height:100%;object-fit:cover;display:block}
+  .gallery{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .gallery .ph{aspect-ratio:1/1;border-radius:12px;background:linear-gradient(145deg,#4f7cff33,#10b98133);border:1px solid var(--edge)}
+  .pillbar{display:flex;gap:8px;flex-wrap:wrap}
+
+  .footer{margin-top:32px;padding:24px;border-top:1px solid var(--edge);
+    display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;color:var(--muted)}
+
+  /* All-in-one view (optional) */
+  body.show-all section{display:block}
+  body.show-all .divider{height:1px;background:var(--edge);margin:24px 0;border-radius:999px;opacity:.6}
+
+  @media (max-width:900px){
+    .hero{grid-template-columns:1fr}
+    .grid.cols-3{grid-template-columns:1fr}
+    .grid.cols-2{grid-template-columns:1fr}
+    .gallery{grid-template-columns:repeat(3,1fr)}
+  }
+</style>
+</head>
+<body>
+<canvas id="fx-canvas" aria-hidden="true"></canvas>
+
+<header class="site">
+  <div class="wrap">
+    <nav class="top">
+      <div class="brand">
+        <img src="assets/img/logo-black.png" alt="Ashraf logo">
+        <h1>ASHRAF</h1>
+      </div>
+      <div class="navlinks" role="navigation" aria-label="Primary">
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#now">Now</a>
+        <a href="#projects">Projects</a>
+        <a href="#notes">Notes</a>
+        <a href="#problems">Problems</a>
+        <a href="#solutions">Solutions</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#contact">Contact</a>
+        <a href="#all" title="Show everything">All</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="content">
+  <!-- HOME -->
+  <section id="home" class="active">
+    <div class="hero">
+      <div class="card" style="padding:28px">
+        <span class="badge">🚀 Personal Operating System</span>
+        <h2>Hi, I’m <span style="color:var(--brand)">Ashraf</span>. This site is my universe — projects, notes, ideas, wins, and lessons.</h2>
+        <p class="muted">Think of it as a portfolio + knowledge base + changelog of my life. I publish code, designs, essays, media, problem logs, and solutions.</p>
+        <div class="kpis">
+          <div class="mini">
+            <div class="muted">Projects</div>
+            <strong>12</strong>
+          </div>
+          <div class="mini">
+            <div class="muted">Notes</div>
+            <strong>48</strong>
+          </div>
+          <div class="mini">
+            <div class="muted">Last update</div>
+            <time datetime="2025-08-31">Aug 31, 2025</time>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:0">
+        <div class="media" role="img" aria-label="Featured visual">
+          <img src="assets/img/hero-banner.png" alt="Hero banner showcasing Ashraf’s projects">
+        </div>
+        <div style="margin:10px 18px 18px" class="muted">A quick visual of what I’m building right now.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <h3>About</h3>
+    <p class="muted">A short bio and what I’m optimizing for.</p>
+    <div class="grid cols-2">
+      <article class="card" style="padding:18px">
+        <h4>Bio</h4>
+        <p>I’m a computer science student and builder. I enjoy C++ systems, game dev, branding, and turning ideas into shipped products.</p>
+        <div class="pillbar">
+          <span class="tag">C++</span><span class="tag">Cybersecurity</span><span class="tag">Brand Design</span><span class="tag">Unity</span><span class="tag">Web</span>
+        </div>
+      </article>
+      <article class="card" style="padding:18px">
+        <h4>Now</h4>
+        <ul>
+          <li>Publishing an Android idle game.</li>
+          <li>Deep-diving data structures and OOP patterns.</li>
+          <li>Designing a clean brand system for side projects.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- NOW -->
+  <section id="now">
+    <h3>Now</h3>
+    <p class="muted">What I’m focused on this month.</p>
+    <div class="card" style="padding:18px">
+      <ul>
+        <li>Publishing an Android idle game.</li>
+        <li>Deep-diving data structures and OOP patterns.</li>
+        <li>Designing a clean brand system for side projects.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <h3>Projects</h3>
+    <p class="muted">Shipped things and works-in-progress.</p>
+    <div class="grid cols-3">
+      <article class="card project">
+        <h4>Bank Account Management System (C++)</h4>
+        <p class="muted">OOP + singly linked lists. Two versions: Basic (add/display/search/deposit/withdraw/delete) and Advanced (Admin/Staff/ATM/CDM panels, PIN, transfers, logs, binary file storage).</p>
+        <div class="pillbar"><span class="tag">C++</span><span class="tag">OOP</span><span class="tag">Linked List</span><span class="tag">CLI</span></div>
+        <a class="badge" href="https://github.com/ASHRAF-2004/Bank_Account_Management_System" target="_blank" rel="noopener">View repo →</a>
+      </article>
+      <article class="card project">
+        <h4>ZenVibe Brand</h4>
+        <p class="muted">A wellness beverage brand with 3D mockups and guidelines.</p>
+        <div class="pillbar"><span class="tag">Branding</span><span class="tag">3D</span><span class="tag">Canva</span></div>
+        <a href="#" class="badge">Case study →</a>
+      </article>
+      <article class="card project">
+        <h4>Idle Android Game</h4>
+        <p class="muted">Rewarded-ads loop, offline earnings, upgrade tree.</p>
+        <div class="pillbar"><span class="tag">Unity</span><span class="tag">C#</span><span class="tag">Android</span></div>
+        <a href="#" class="badge">Devlog →</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- NOTES -->
+  <section id="notes">
+    <h3>Notes</h3>
+    <p class="muted">Short posts, essays, or learning logs.</p>
+    <div class="list">
+      <div class="row"><time>2025-08-28</time><div><strong>How I debug pointer issues in C++</strong><div class="muted">A checklist for segfaults, UB, and flag updates.</div></div></div>
+      <div class="row"><time>2025-08-19</time><div><strong>Brand color systems that scale</strong><div class="muted">Notes on tokens, contrast, and accessibility.</div></div></div>
+    </div>
+  </section>
+
+  <!-- PROBLEMS -->
+  <section id="problems">
+    <h3>Problem Log</h3>
+    <p class="muted">Bugs, blockers, and tough questions I’m exploring.</p>
+    <div class="list">
+      <div class="row"><time>2025-08-30</time><div><strong>g++ path error on Windows PowerShell</strong><div class="muted">Spaces in filenames; quoting and output naming.</div></div></div>
+      <div class="row"><time>2025-08-15</time><div><strong>AdMob rewarded eCPM volatility</strong><div class="muted">Daily caps, fill rates, cache strategies.</div></div></div>
+    </div>
+  </section>
+
+  <!-- SOLUTIONS -->
+  <section id="solutions">
+    <h3>Solutions & How-tos</h3>
+    <p class="muted">Write-ups for future me.</p>
+    <div class="grid cols-2">
+      <article class="card" style="padding:18px">
+        <h4>Fix “No such file or directory” in g++</h4>
+        <ol>
+          <li>Avoid spaces in filenames (or quote them).</li>
+          <li>Use: <code>g++ -std=c++20 data_types.cpp -o data_types</code></li>
+          <li>Run with: <code>./data_types</code> (or <code>./data_types.exe</code> on Windows).</li>
+        </ol>
+      </article>
+      <article class="card" style="padding:18px">
+        <h4>Export SVG for vector logos</h4>
+        <ol>
+          <li>Remove background (PNG with transparency).</li>
+          <li>Trace in vector tool; export as <code>.svg</code>.</li>
+          <li>Embed SVG inline for crisp scaling on web.</li>
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section id="gallery">
+    <h3>Gallery</h3>
+    <p class="muted">Images, posters, thumbnails, mockups.</p>
+    <div class="gallery" aria-label="Image gallery">
+      <div class="ph" role="img" aria-label="Placeholder image 1"></div>
+      <div class="ph" role="img" aria-label="Placeholder image 2"></div>
+      <div class="ph" role="img" aria-label="Placeholder image 3"></div>
+      <div class="ph" role="img" aria-label="Placeholder image 4"></div>
+      <div class="ph" role="img" aria-label="Placeholder image 5"></div>
+      <div class="ph" role="img" aria-label="Placeholder image 6"></div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <h3>Contact</h3>
+    <p class="muted">Links, email, and a downloadable CV.</p>
+    <div class="grid cols-3">
+      <div class="card project">
+        <h4>Links</h4>
+        <ul>
+          <li><a href="https://github.com/ASHRAF-2004" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="#" aria-disabled="true">LinkedIn</a></li>
+          <li><a href="#" aria-disabled="true">YouTube</a></li>
+          <li><a href="#" aria-disabled="true">TikTok</a></li>
+        </ul>
+      </div>
+      <div class="card project">
+        <h4>Email</h4>
+        <p><a href="thalththanwyd@gmail.com">thalththanwyd@gmail.com</a></p>
+        <p class="muted">I read everything. Short and specific emails get quick replies.</p>
+      </div>
+      <div class="card project">
+        <h4>Resume</h4>
+        <p><a href="assets/docs/cv.pdf" download>Download CV (PDF)</a></p>
+        <p class="muted">Keep one updated copy at <code>/assets/docs/cv.pdf</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- (Optional) divider when viewing all -->
+  <div class="divider" aria-hidden="true"></div>
+</main>
+
+<div class="footer">
+  <div>© <span id="year">2025</span> • Built with pure HTML & CSS</div>
+  <div class="muted">Last updated: Aug 31, 2025</div>
+</div>
+
+<script>
+  // Optimized single particle background
+  (function(){
+    const c = document.getElementById('fx-canvas');
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const ctx = c.getContext('2d');
+    let W=0,H=0,particles=[],mouse={x:-9999,y:-9999};
+    const COLORS=['#4f7cff','#7c58ff','#10b981'];
+
+    function resize(){
+      W = c.width = Math.floor(innerWidth * dpr);
+      H = c.height = Math.floor(innerHeight * dpr);
+      c.style.width = innerWidth+'px';
+      c.style.height = innerHeight+'px';
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.scale(dpr,dpr);
+      init();
+    }
+    addEventListener('resize', resize, {passive:true});
+
+    function init(){
+      const count = Math.floor((innerWidth*innerHeight)/16000);
+      particles = Array.from({length:count},()=>({
+        x: Math.random()*innerWidth,
+        y: Math.random()*innerHeight,
+        vx:(Math.random()-.5)*0.18,
+        vy:(Math.random()-.5)*0.18,
+        r: 1 + Math.random()*2,
+        c: COLORS[Math.random()*COLORS.length|0]
+      }));
+    }
+    function step(){
+      ctx.clearRect(0,0,innerWidth,innerHeight);
+      for(const p of particles){
+        p.x+=p.vx; p.y+=p.vy;
+        if(p.x<-10)p.x=innerWidth+10; if(p.x>innerWidth+10)p.x=-10;
+        if(p.y<-10)p.y=innerHeight+10; if(p.y>innerHeight+10)p.y=-10;
+
+        const dx=p.x-mouse.x, dy=p.y-mouse.y, r=140, d2=dx*dx+dy*dy;
+        if(d2<r*r){
+          const f=(r/Math.max(30,Math.sqrt(d2)))*0.6;
+          p.x += dx*0.04*f; p.y += dy*0.04*f;
+        }
+      }
+      for(const p of particles){
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle = p.c + '22'; ctx.fill();
+      }
+      requestAnimationFrame(step);
+    }
+    addEventListener('mousemove', e=>{mouse.x=e.clientX;mouse.y=e.clientY;},{passive:true});
+    addEventListener('mouseleave', ()=>{mouse.x=-9999;mouse.y=-9999;});
+    resize(); requestAnimationFrame(step);
+  })();
+
+  // Section router: show one section at a time via hash (#about, #projects, etc.)
+  (function(){
+    const sections = Array.from(document.querySelectorAll('main section'));
+    const navlinks = Array.from(document.querySelectorAll('.navlinks a'));
+
+    function setActiveLink(hash){
+      navlinks.forEach(a=>{
+        const match = (a.getAttribute('href') === hash) ||
+                      (hash==='' && a.getAttribute('href')==='#home');
+        a.setAttribute('aria-current', match ? 'page' : '');
+      });
+    }
+
+    function showSectionByHash(){
+      const hash = location.hash || '#home';
+
+      // Optional All view
+      if(hash === '#all'){
+        document.body.classList.add('show-all');
+        sections.forEach(s=>s.classList.add('active'));
+        setActiveLink(hash);
+        return;
+      } else {
+        document.body.classList.remove('show-all');
+      }
+
+      // Normal single-section view
+      sections.forEach(s=>s.classList.remove('active'));
+      const target = document.querySelector(hash);
+      (target || document.querySelector('#home')).classList.add('active');
+      setActiveLink(hash);
+      // scroll to top for clean section view
+      window.scrollTo({top:0, behavior:'instant' in ScrollBehavior ? 'instant' : 'auto'});
+    }
+
+    window.addEventListener('hashchange', showSectionByHash, {passive:true});
+    document.addEventListener('DOMContentLoaded', showSectionByHash);
+  })();
+
+  // Footer year
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
