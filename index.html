@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
-<link rel="icon" type="image/png" href="assets/logo-black.png" />
-<link rel="apple-touch-icon" href="assets/logo-black.png" />
+<link rel="icon" type="image/png" href="assets/logo-white.png" />
+<link rel="apple-touch-icon" href="assets/logo-white.png" />
 
 <meta property="og:title" content="Ashraf — Projects, notes, and personal hub">
 <meta property="og:description" content="Portfolio + knowledge base + changelog of my life. I build in public.">
@@ -28,10 +28,7 @@
     --brand:#4f7cff; --accent:#10b981; --card:#151a21; --edge:#202733;
     --shadow:0 10px 30px rgba(0,0,0,.35); --radius:16px; --maxw:1100px;
   }
-  @media (prefers-color-scheme: light){
-    :root{--bg:#f7f9fc; --bg-alt:#fff; --text:#0f1720; --muted:#5b6b7a;
-      --card:#ffffff; --edge:#e8eef5; --shadow:0 10px 30px rgba(16,24,40,.08);}
-  }
+ 
   *{box-sizing:border-box}
   html,body{height:100%}
   body{margin:0;font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:linear-gradient(180deg,var(--bg),var(--bg-alt));color:var(--text)}
@@ -40,9 +37,7 @@
   .wrap{max-width:var(--maxw);margin-inline:auto;padding:24px}
 
   /* Background */
-  #fx-canvas{position:fixed;inset:0;z-index:-1;background:
-    radial-gradient(1200px 800px at 80% -20%,#4f7cff18,transparent),
-    radial-gradient(1000px 700px at -10% 120%,#10b98118,transparent);}
+  #fx-canvas{position:fixed;inset:0;z-index:-1;background:#000;}
   @media (prefers-reduced-motion: reduce){#fx-canvas{display:none}}
 
   header.site{position:sticky;top:0;backdrop-filter:saturate(140%) blur(8px);
@@ -105,7 +100,7 @@
   <div class="wrap">
     <nav class="top">
       <div class="brand">
-        <img src="assets/logo-black.png" alt="Ashraf logo">
+        <img src="assets/logo-white.png" alt="Ashraf logo">
         <h1>ASHRAF</h1>
       </div>
       <div class="navlinks" role="navigation" aria-label="Primary">
@@ -318,7 +313,7 @@
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const ctx = c.getContext('2d');
     let W=0,H=0,particles=[],mouse={x:-9999,y:-9999};
-    const COLORS=['#4f7cff','#7c58ff','#10b981'];
+    
 
     function resize(){
       W = c.width = Math.floor(innerWidth * dpr);
@@ -338,8 +333,7 @@
         y: Math.random()*innerHeight,
         vx:(Math.random()-.5)*0.18,
         vy:(Math.random()-.5)*0.18,
-        r: 1 + Math.random()*2,
-        c: COLORS[Math.random()*COLORS.length|0]
+        r: 1 + Math.random()*2
       }));
     }
     function step(){
@@ -355,10 +349,23 @@
           p.x += dx*0.04*f; p.y += dy*0.04*f;
         }
       }
+      for(let i=0;i<particles.length;i++){
+        for(let j=i+1;j<particles.length;j++){
+          const p=particles[i],q=particles[j];
+          const dx=p.x-q.x,dy=p.y-q.y; const dist=Math.hypot(dx,dy); const maxD=120;
+          if(dist<maxD){
+            ctx.strokeStyle=`rgba(255,255,255,${0.2*(1-dist/maxD)})`;
+            ctx.lineWidth=0.5;
+            ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+          }
+        }
+      }
       for(const p of particles){
         ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle = p.c + '22'; ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,0.8)';
+        ctx.shadowBlur=8; ctx.shadowColor='#fff'; ctx.fill();
       }
+      ctx.shadowBlur=0;
       requestAnimationFrame(step);
     }
     addEventListener('mousemove', e=>{mouse.x=e.clientX;mouse.y=e.clientY;},{passive:true});
