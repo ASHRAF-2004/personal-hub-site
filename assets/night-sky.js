@@ -250,8 +250,8 @@
 		repelRadius: 170,   // نصف قطر الهروب بالبيكسل
 		repelStrength: 0.9  // قوة الهروب
 		};
-		moon.img.src = "moon.png";        // القمر الكامل
-		moon.newMoonImg.src = "new-moon.png"; // صورة المحاق
+		moon.img.src = "assets/moon.png";        // القمر الكامل
+		moon.newMoonImg.src = "assets/new-moon.png"; // صورة المحاق
 		
 	  function drawMoon() {
   if (!moonEnabled) return;
@@ -385,4 +385,5 @@
 });
 
     })();
+
 	
