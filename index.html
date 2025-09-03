@@ -37,8 +37,8 @@
   .wrap{max-width:var(--maxw);margin-inline:auto;padding:24px}
 
   /* Background */
-  #fx-canvas{position:fixed;inset:0;z-index:-1;background:#000;}
-  @media (prefers-reduced-motion: reduce){#fx-canvas{display:none}}
+  #sky{position:fixed;inset:0;z-index:-1;display:block;width:100%;height:100%;pointer-events:none;}
+  @media (prefers-reduced-motion: reduce){#sky{display:none}}
 
   header.site{position:sticky;top:0;backdrop-filter:saturate(140%) blur(8px);
     background:color-mix(in hsl,var(--bg-alt) 80%, transparent);
@@ -94,7 +94,7 @@
 </style>
 </head>
 <body>
-<canvas id="fx-canvas" aria-hidden="true"></canvas>
+<canvas id="sky" aria-hidden="true"></canvas>
 
 <header class="site">
   <div class="wrap">
@@ -305,74 +305,9 @@
   <div>© <span id="year">2025</span> • Built with pure HTML & CSS</div>
   <div class="muted">Last updated: Aug 31, 2025</div>
 </div>
-
+  
+<script src="assets/night-sky.js"></script>
 <script>
-  // Optimized single particle background
-  (function(){
-    const c = document.getElementById('fx-canvas');
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const ctx = c.getContext('2d');
-    let W=0,H=0,particles=[],mouse={x:-9999,y:-9999};
-    
-
-    function resize(){
-      W = c.width = Math.floor(innerWidth * dpr);
-      H = c.height = Math.floor(innerHeight * dpr);
-      c.style.width = innerWidth+'px';
-      c.style.height = innerHeight+'px';
-      ctx.setTransform(1,0,0,1,0,0);
-      ctx.scale(dpr,dpr);
-      init();
-    }
-    addEventListener('resize', resize, {passive:true});
-
-    function init(){
-      const count = Math.floor((innerWidth*innerHeight)/16000);
-      particles = Array.from({length:count},()=>({
-        x: Math.random()*innerWidth,
-        y: Math.random()*innerHeight,
-        vx:(Math.random()-.5)*0.18,
-        vy:(Math.random()-.5)*0.18,
-        r: 1 + Math.random()*2
-      }));
-    }
-    function step(){
-      ctx.clearRect(0,0,innerWidth,innerHeight);
-      for(const p of particles){
-        p.x+=p.vx; p.y+=p.vy;
-        if(p.x<-10)p.x=innerWidth+10; if(p.x>innerWidth+10)p.x=-10;
-        if(p.y<-10)p.y=innerHeight+10; if(p.y>innerHeight+10)p.y=-10;
-
-        const dx=p.x-mouse.x, dy=p.y-mouse.y, r=140, d2=dx*dx+dy*dy;
-        if(d2<r*r){
-          const f=(r/Math.max(30,Math.sqrt(d2)))*0.6;
-          p.x += dx*0.04*f; p.y += dy*0.04*f;
-        }
-      }
-      for(let i=0;i<particles.length;i++){
-        for(let j=i+1;j<particles.length;j++){
-          const p=particles[i],q=particles[j];
-          const dx=p.x-q.x,dy=p.y-q.y; const dist=Math.hypot(dx,dy); const maxD=120;
-          if(dist<maxD){
-            ctx.strokeStyle=`rgba(255,255,255,${0.2*(1-dist/maxD)})`;
-            ctx.lineWidth=0.5;
-            ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
-          }
-        }
-      }
-      for(const p of particles){
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle='rgba(255,255,255,0.8)';
-        ctx.shadowBlur=8; ctx.shadowColor='#fff'; ctx.fill();
-      }
-      ctx.shadowBlur=0;
-      requestAnimationFrame(step);
-    }
-    addEventListener('mousemove', e=>{mouse.x=e.clientX;mouse.y=e.clientY;},{passive:true});
-    addEventListener('mouseleave', ()=>{mouse.x=-9999;mouse.y=-9999;});
-    resize(); requestAnimationFrame(step);
-  })();
-
   // Section router: show one section at a time via hash (#about, #projects, etc.)
   (function(){
     const sections = Array.from(document.querySelectorAll('main section'));
