@@ -237,21 +237,24 @@
         }
       }
 	  
-	  let moonEnabled = true;   // القمر ظاهر/مشتغل
-	  let moonNewPhase = false; // حالة المحاق
-	  let moonDarkness = 0.7;      // 1 = طبيعي، <1 = أفتح، >1 = أغمق
+          let moonEnabled = true;   // القمر ظاهر/مشتغل
+          let moonNewPhase = false; // حالة المحاق
+          let moonDarkness = 0.7;      // 1 = طبيعي، <1 = أفتح، >1 = أغمق
 
-		const moon = {
-		img: new Image(),
-		newMoonImg: new Image(),   // صورة المحاق
-		sizeFactor: 0.25,   // نسبة حجم القمر من الشاشة
-		xFactor: 0.92,       // موقعه أفقياً (80% يمين)
-		yFactor: 0.17,      // موقعه رأسياً (25% أعلى)
-		repelRadius: 170,   // نصف قطر الهروب بالبيكسل
-		repelStrength: 0.9  // قوة الهروب
-		};
-		moon.img.src = "assets/moon.png";        // القمر الكامل
-		moon.newMoonImg.src = "assets/new-moon.png"; // صورة المحاق
+          const moon = {
+            img: new Image(),
+            newMoonImg: new Image(),   // صورة المحاق
+            sizeFactor: 0.25,   // نسبة حجم القمر من الشاشة
+            xFactor: 0.92,       // موقعه أفقياً (80% يمين)
+            yFactor: 0.17,      // موقعه رأسياً (25% أعلى)
+            repelRadius: 170,   // نصف قطر الهروب بالبيكسل
+            repelStrength: 0.9  // قوة الهروب
+          };
+
+          const scriptSrc = document.currentScript ? document.currentScript.src : '';
+          const assetBase = scriptSrc.slice(0, scriptSrc.lastIndexOf('/') + 1);
+          moon.img.src = assetBase + 'moon.png';        // القمر الكامل
+          moon.newMoonImg.src = assetBase + 'new-moon.png'; // صورة المحاق
 		
 	  function drawMoon() {
   if (!moonEnabled) return;
@@ -364,26 +367,31 @@
       resize();
       step();
 	  
-	 canvas.addEventListener("click", (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const ratio = window.devicePixelRatio || 1;
+      // Listen on window so clicks register even though the canvas ignores pointer events
+      window.addEventListener("click", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
 
-  const mouseX = (e.clientX - rect.left) * ratio;
-  const mouseY = (e.clientY - rect.top) * ratio;
+        const mouseX = (e.clientX - rect.left) * ratio;
+        const mouseY = (e.clientY - rect.top) * ratio;
 
-  const moonSize = Math.min(W, H) * moon.sizeFactor;
-  const mx = W * moon.xFactor;
-  const my = H * moon.yFactor;
+        const moonSize = Math.min(W, H) * moon.sizeFactor;
+        const mx = W * moon.xFactor;
+        const my = H * moon.yFactor;
 
-  const dx = mouseX - mx;
-  const dy = mouseY - my;
-  const dist = Math.sqrt(dx * dx + dy * dy);
+        const dx = mouseX - mx;
+        const dy = mouseY - my;
+        const dist = Math.sqrt(dx * dx + dy * dy);
 
-  if (dist < moonSize / 2) {
-    moonNewPhase = !moonNewPhase;
-  }
-});
+        if (dist < moonSize / 2) {
+          moonNewPhase = !moonNewPhase;
+        }
+      });
+
+
+
+
+
 
     })();
-
 	
