@@ -15,8 +15,8 @@
         returnSpring: 0.005,     // pull back to home (lower to reduce “shake”)
         starSize: [1.1, 2.2],    // base size range (will be scaled by DPR)
         twinkleSpeed: 0.012,     // phase speed
-        bgTop: '#050814',        // night sky gradient
-        bgBottom: '#02040a'
+        bgTop: '#141824',        // night sky gradient
+        bgBottom: '#0a0f1f'
       };
 
       const dpr = () => window.devicePixelRatio || 1;
@@ -395,3 +395,4 @@
 
     })();
 	
+
