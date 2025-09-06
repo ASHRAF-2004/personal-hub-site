@@ -30,10 +30,12 @@
   }
  
   *{box-sizing:border-box}
-  html,body{height:100%}
+  html,body{height:100%;scroll-behavior:smooth}
   body{margin:0;font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:linear-gradient(180deg,var(--bg),var(--bg-alt));color:var(--text)}
-  a{color:var(--brand);text-decoration:none}
-  a:hover{text-decoration:underline}
+  a{color:var(--brand);text-decoration:none;transition:transform .2s}
+  a:hover,a:focus,a:active{text-decoration:underline;transform:scale(1.05)}
+  button{transition:transform .2s}
+  button:hover,button:focus,button:active{transform:scale(1.05)}
   .wrap{max-width:var(--maxw);margin-inline:auto;padding:24px}
 
   /* Background */
@@ -41,16 +43,16 @@
   @media (prefers-reduced-motion: reduce){#sky{display:none}}
 
   header.site{position:sticky;top:0;backdrop-filter:saturate(140%) blur(8px);
-    background:color-mix(in hsl,var(--bg-alt) 80%, transparent);
-    border-bottom:1px solid var(--edge);z-index:10}
-  nav.top{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    background:transparent;border-bottom:none;z-index:10}
+  nav.top{display:flex;gap:12px;align-items:center;justify-content:space-between;position:relative}
   .brand{display:flex;gap:12px;align-items:center}
   .brand img{width:40px;height:40px;border-radius:12px;box-shadow:var(--shadow);object-fit:cover}
   .brand h1{font-size:18px;margin:0}
+  .menu-toggle{display:none;background:none;border:none;color:var(--text);font-size:28px;cursor:pointer}
   .navlinks{display:flex;gap:8px;flex-wrap:wrap}
   .navlinks a{padding:8px 12px;border-radius:999px;background:var(--card);border:1px solid var(--edge)}
   .navlinks a[aria-current="page"]{outline:2px solid var(--brand)}
-  .navlinks a:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+  .navlinks a:hover{transform:translateY(-1px) scale(1.05);box-shadow:var(--shadow);text-decoration:none}
 
   .card{background:var(--card);border:1px solid var(--edge);border-radius:var(--radius);box-shadow:var(--shadow)}
   .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:linear-gradient(180deg,var(--bg-alt),var(--card));border:1px solid var(--edge);font-size:12px}
@@ -87,6 +89,13 @@
     .grid.cols-2{grid-template-columns:1fr}
     .gallery{grid-template-columns:repeat(3,1fr)}
   }
+  
+  /* Mobile navigation */
+  @media (max-width:600px){
+    .navlinks{display:none;position:absolute;top:60px;right:0;background:var(--card);flex-direction:column;padding:16px;border-radius:12px;box-shadow:var(--shadow)}
+    .navlinks.show{display:flex}
+    .menu-toggle{display:block}
+  }
 </style>
 </head>
 <body>
@@ -95,10 +104,11 @@
 <header class="site">
   <div class="wrap">
     <nav class="top">
-      <div class="brand">
+      <a href="#home" class="brand">
         <img src="assets/logo-white.PNG" alt="Ashraf logo">
         <h1>ASHRAF</h1>
-      </div>
+      </a>
+      <button class="menu-toggle" aria-label="Menu" aria-expanded="false">&#9776;</button>
       <div class="navlinks" role="navigation" aria-label="Primary">
         <a href="#home">Home</a>
         <a href="#about">About</a>
@@ -230,6 +240,18 @@
 <script>
   
   document.getElementById('year').textContent = new Date().getFullYear();
+  
+  const menuToggle=document.querySelector('.menu-toggle');
+  const navlinks=document.querySelector('.navlinks');
+  menuToggle.addEventListener('click',()=>{
+    const expanded=menuToggle.getAttribute('aria-expanded')==='true';
+    menuToggle.setAttribute('aria-expanded',!expanded);
+    navlinks.classList.toggle('show');
+  });
+  navlinks.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{
+    navlinks.classList.remove('show');
+    menuToggle.setAttribute('aria-expanded',false);
+  }));
 </script>
 </body>
 </html>
