@@ -42,17 +42,15 @@
   #sky{position:fixed;inset:0;z-index:-1;display:block;width:100%;height:100%;pointer-events:none;}
   @media (prefers-reduced-motion: reduce){#sky{display:none}}
 
-  header.site{position:sticky;top:0;backdrop-filter:saturate(140%) blur(8px);
-    background:transparent;border-bottom:none;z-index:10}
+  header.site{position:sticky;top:0;background:transparent;border-bottom:none;z-index:10}
   nav.top{display:flex;gap:12px;align-items:center;justify-content:space-between;position:relative}
   .brand{display:flex;gap:12px;align-items:center}
   .brand img{width:40px;height:40px;border-radius:12px;box-shadow:var(--shadow);object-fit:cover}
-  .brand h1{font-size:18px;margin:0}
   .menu-toggle{display:none;background:none;border:none;color:var(--text);font-size:28px;cursor:pointer}
   .navlinks{display:flex;gap:8px;flex-wrap:wrap}
-  .navlinks a{padding:8px 12px;border-radius:999px;background:var(--card);border:1px solid var(--edge)}
+  .navlinks a{padding:8px 12px;border-radius:999px;background:transparent;border:0}
   .navlinks a[aria-current="page"]{outline:2px solid var(--brand)}
-  .navlinks a:hover{transform:translateY(-1px) scale(1.05);box-shadow:var(--shadow);text-decoration:none}
+   .navlinks a:hover{transform:translateY(-1px) scale(1.05);box-shadow:var(--shadow);text-decoration:none}
 
   .card{background:var(--card);border:1px solid var(--edge);border-radius:var(--radius);box-shadow:var(--shadow)}
   .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:linear-gradient(180deg,var(--bg-alt),var(--card));border:1px solid var(--edge);font-size:12px}
@@ -103,11 +101,10 @@
 
 <header class="site">
   <div class="wrap">
-    <nav class="top">
-      <a href="#home" class="brand">
-        <img src="assets/logo-white.PNG" alt="Ashraf logo">
-        <h1>ASHRAF</h1>
-      </a>
+     <nav class="top">
+        <a href="#home" class="brand">
+          <img src="assets/logo-white.PNG" alt="Ashraf logo">
+        </a>
       <button class="menu-toggle" aria-label="Menu" aria-expanded="false">&#9776;</button>
       <div class="navlinks" role="navigation" aria-label="Primary">
         <a href="#home">Home</a>
