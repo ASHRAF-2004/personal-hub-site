@@ -1,37 +1,31 @@
 # Changed Files List
 
-## Root Files
+## Badge Fix
 
-- `.gitignore`
-- `index.html`
-- `package-lock.json`
-- `package.json`
-- `vite.config.js`
-
-## Public Assets
-
-- `public/My_Image.png`
-- `public/resume.pdf`
-- `public/resume-ats-strict.pdf`
-
-## Source Files
-
-- `src/App.jsx`
-- `src/main.jsx`
-- `src/index.css`
-- `src/assets/my-image-processed.png`
 - `src/components/Hero3DIDBadge.jsx`
-- `src/components/ProjectCard.jsx`
-- `src/data/projects.js`
-- `src/data/skills.js`
+- `src/index.css`
 
-## Handoff Files
+## Dependency And Build Files
+
+- `package.json`
+- `package-lock.json`
+- `index.html`
+- `public/favicon.svg`
+
+## Deliverables
 
 - `implementation-summary.md`
 - `changed-files-list.md`
 - `setup-run-instructions.md`
 - `portfolio-improvements.md`
 - `known-limitations.md`
+
+## Existing Assets Used
+
+- `src/assets/my-image-processed.png`
+- `public/My_Image.png`
+- `public/resume.pdf`
+- `public/resume-ats-strict.pdf`
 
 ## Generated But Ignored
 

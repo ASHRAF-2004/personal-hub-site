@@ -1,17 +1,28 @@
-import { useEffect, useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Environment } from '@react-three/drei'
+import * as THREE from 'three'
+import { Component, Suspense, useEffect, useRef, useState } from 'react'
+import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
+import { Environment, Lightformer, RoundedBox, useTexture } from '@react-three/drei'
+import {
+  BallCollider,
+  CuboidCollider,
+  Physics,
+  RigidBody,
+  useRopeJoint,
+  useSphericalJoint,
+} from '@react-three/rapier'
+import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
 import portraitUrl from '../assets/my-image-processed.png'
 
-const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+extend({ MeshLineGeometry, MeshLineMaterial })
 
 function useReducedMotion() {
   const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReducedMotion(media.matches)
     const handleChange = () => setReducedMotion(media.matches)
+
+    handleChange()
     media.addEventListener('change', handleChange)
     return () => media.removeEventListener('change', handleChange)
   }, [])
@@ -31,179 +42,290 @@ function isWebGLAvailable() {
   }
 }
 
-function AmbientScene({ reducedMotion }) {
-  const ringRef = useRef(null)
+class BadgeErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { failed: false }
+  }
 
-  useFrame((state, delta) => {
-    if (!ringRef.current || reducedMotion) return
-    ringRef.current.rotation.z += delta * 0.08
-    ringRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.24) * 0.08
-  })
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
 
-  return (
-    <>
-      <ambientLight intensity={1.1} />
-      <directionalLight position={[2, 3, 4]} intensity={2.5} />
-      <directionalLight position={[-3, -2, 2]} intensity={0.8} />
-      <mesh ref={ringRef} position={[0, -0.15, -1.8]} rotation={[0.82, 0.18, 0]}>
-        <torusGeometry args={[2.4, 0.018, 16, 160]} />
-        <meshStandardMaterial color="#f4f4f5" transparent opacity={0.18} />
-      </mesh>
-      <mesh position={[0, 2.92, -0.4]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.19, 0.024, 12, 48]} />
-        <meshStandardMaterial color="#e5e7eb" metalness={0.7} roughness={0.26} />
-      </mesh>
-      <Environment preset="city" />
-    </>
-  )
+  componentDidCatch(error) {
+    console.error('3D badge failed to render.', error)
+  }
+
+  render() {
+    if (this.state.failed) {
+      return <StaticBadgeFallback reason="3D badge fallback shown because the physics scene failed." />
+    }
+
+    return this.props.children
+  }
 }
 
-function BadgeFace() {
+function BadgeCard({ portraitTexture }) {
   return (
-    <div className="id-card-face">
-      <div className="id-card-header">
-        <span>Developer ID</span>
-        <span translate="no">ASHRAF-2004</span>
-      </div>
-      <div className="id-card-main">
-        <img
-          src={portraitUrl}
-          alt=""
-          width="118"
-          height="148"
-          loading="eager"
-          draggable="false"
+    <group>
+      <RoundedBox args={[1.36, 2.12, 0.09]} radius={0.055} smoothness={8}>
+        <meshPhysicalMaterial
+          color="#070707"
+          roughness={0.34}
+          metalness={0.38}
+          clearcoat={0.9}
+          clearcoatRoughness={0.22}
         />
-        <div>
-          <p className="id-card-name">Ashraf Ali Hussain Al-Saloul</p>
-          <p>Computer Science Student</p>
-          <p>Software Engineering</p>
-        </div>
-      </div>
-      <dl className="id-card-meta">
-        <div>
-          <dt>University</dt>
-          <dd>Multimedia University</dd>
-        </div>
-        <div>
-          <dt>Location</dt>
-          <dd>Cyberjaya, Malaysia</dd>
-        </div>
-        <div>
-          <dt>Target</dt>
-          <dd>Software Engineering Intern</dd>
-        </div>
-        <div>
-          <dt>Stack</dt>
-          <dd>Python, C++, FastAPI, React</dd>
-        </div>
-      </dl>
-    </div>
+      </RoundedBox>
+
+      <mesh position={[0, 0, 0.052]}>
+        <planeGeometry args={[1.21, 1.94]} />
+        <meshBasicMaterial map={portraitTexture} toneMapped={false} />
+      </mesh>
+
+      <mesh position={[0, 1.13, 0.072]}>
+        <boxGeometry args={[0.44, 0.1, 0.075]} />
+        <meshStandardMaterial color="#d8d8d8" metalness={0.82} roughness={0.2} />
+      </mesh>
+
+      <mesh position={[0, 1.24, 0.08]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.15, 0.017, 12, 48]} />
+        <meshStandardMaterial color="#f2f2f2" metalness={0.9} roughness={0.18} />
+      </mesh>
+
+      <mesh position={[0, -1.09, 0.056]}>
+        <boxGeometry args={[1.1, 0.015, 0.012]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.32} />
+      </mesh>
+    </group>
   )
 }
 
-function DraggableBadge({ reducedMotion }) {
-  const [dragging, setDragging] = useState(false)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const startRef = useRef({ pointerX: 0, pointerY: 0, x: 0, y: 0 })
+function PhysicsBadge({ maxSpeed = 50, minSpeed = 10 }) {
+  const band = useRef(null)
+  const fixed = useRef(null)
+  const j1 = useRef(null)
+  const j2 = useRef(null)
+  const j3 = useRef(null)
+  const card = useRef(null)
+
+  const vec = new THREE.Vector3()
+  const ang = new THREE.Vector3()
+  const rot = new THREE.Vector3()
+  const dir = new THREE.Vector3()
+  const segmentProps = {
+    type: 'dynamic',
+    canSleep: true,
+    colliders: false,
+    angularDamping: 2,
+    linearDamping: 2,
+  }
+
+  const portraitTexture = useTexture(portraitUrl)
+  const { width, height } = useThree((state) => state.size)
+  const [curve] = useState(
+    () =>
+      new THREE.CatmullRomCurve3([
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+      ]),
+  )
+  const [dragged, drag] = useState(false)
+  const [hovered, hover] = useState(false)
 
   useEffect(() => {
-    document.body.classList.toggle('is-dragging-badge', dragging)
-    return () => document.body.classList.remove('is-dragging-badge')
-  }, [dragging])
+    portraitTexture.colorSpace = THREE.SRGBColorSpace
+    portraitTexture.anisotropy = 16
+    portraitTexture.minFilter = THREE.LinearMipmapLinearFilter
+    portraitTexture.magFilter = THREE.LinearFilter
+    portraitTexture.needsUpdate = true
+  }, [portraitTexture])
 
-  const updateOffset = (x, y) => {
-    setOffset({
-      x: clamp(x, -96, 96),
-      y: clamp(y, -70, 86),
+  useRopeJoint(fixed, j1, [
+    [0, 0, 0],
+    [0, 0, 0],
+    0.68,
+  ])
+  useRopeJoint(j1, j2, [
+    [0, 0, 0],
+    [0, 0, 0],
+    0.68,
+  ])
+  useRopeJoint(j2, j3, [
+    [0, 0, 0],
+    [0, 0, 0],
+    0.68,
+  ])
+  useSphericalJoint(j3, card, [
+    [0, 0, 0],
+    [0, 1.22, 0],
+  ])
+
+  useEffect(() => {
+    if (!hovered) return undefined
+
+    document.body.style.cursor = dragged ? 'grabbing' : 'grab'
+    return () => {
+      document.body.style.cursor = 'auto'
+    }
+  }, [hovered, dragged])
+
+  useFrame((state, delta) => {
+    if (dragged) {
+      vec.set(state.pointer.x, state.pointer.y, 0.5).unproject(state.camera)
+      dir.copy(vec).sub(state.camera.position).normalize()
+      vec.add(dir.multiplyScalar(state.camera.position.length()))
+      ;[card, j1, j2, j3, fixed].forEach((ref) => ref.current?.wakeUp())
+      card.current?.setNextKinematicTranslation({
+        x: vec.x - dragged.x,
+        y: vec.y - dragged.y,
+        z: vec.z - dragged.z,
+      })
+    }
+
+    if (!fixed.current || !band.current) return
+
+    ;[j1, j2].forEach((ref) => {
+      if (!ref.current.lerped) {
+        ref.current.lerped = new THREE.Vector3().copy(ref.current.translation())
+      }
+
+      const clampedDistance = Math.max(
+        0.1,
+        Math.min(1, ref.current.lerped.distanceTo(ref.current.translation())),
+      )
+      ref.current.lerped.lerp(
+        ref.current.translation(),
+        delta * (minSpeed + clampedDistance * (maxSpeed - minSpeed)),
+      )
     })
-  }
+
+    curve.points[0].copy(j3.current.translation())
+    curve.points[1].copy(j2.current.lerped)
+    curve.points[2].copy(j1.current.lerped)
+    curve.points[3].copy(fixed.current.translation())
+    band.current.geometry.setPoints(curve.getPoints(32))
+
+    ang.copy(card.current.angvel())
+    rot.copy(card.current.rotation())
+    card.current.setAngvel({ x: ang.x, y: ang.y - rot.y * 0.25, z: ang.z })
+  })
+
+  curve.curveType = 'chordal'
 
   const handlePointerDown = (event) => {
-    if (reducedMotion) return
-    event.currentTarget.setPointerCapture(event.pointerId)
-    startRef.current = {
-      pointerX: event.clientX,
-      pointerY: event.clientY,
-      x: offset.x,
-      y: offset.y,
-    }
-    setDragging(true)
-  }
-
-  const handlePointerMove = (event) => {
-    if (!dragging || reducedMotion) return
-    const nextX = startRef.current.x + event.clientX - startRef.current.pointerX
-    const nextY = startRef.current.y + event.clientY - startRef.current.pointerY
-    updateOffset(nextX, nextY)
+    event.stopPropagation()
+    event.target.setPointerCapture(event.pointerId)
+    drag(new THREE.Vector3().copy(event.point).sub(vec.copy(card.current.translation())))
   }
 
   const handlePointerUp = (event) => {
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
+    event.stopPropagation()
+    if (event.target.hasPointerCapture?.(event.pointerId)) {
+      event.target.releasePointerCapture(event.pointerId)
     }
-    setDragging(false)
+    drag(false)
   }
-
-  const handleKeyDown = (event) => {
-    const step = event.shiftKey ? 24 : 12
-    if (event.key === 'ArrowLeft') {
-      event.preventDefault()
-      updateOffset(offset.x - step, offset.y)
-    }
-    if (event.key === 'ArrowRight') {
-      event.preventDefault()
-      updateOffset(offset.x + step, offset.y)
-    }
-    if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      updateOffset(offset.x, offset.y - step)
-    }
-    if (event.key === 'ArrowDown') {
-      event.preventDefault()
-      updateOffset(offset.x, offset.y + step)
-    }
-    if (event.key === 'Home') {
-      event.preventDefault()
-      updateOffset(0, 0)
-    }
-  }
-
-  const rotateX = reducedMotion ? 0 : clamp(offset.y / -12, -8, 8)
-  const rotateY = reducedMotion ? 0 : clamp(offset.x / 12, -10, 10)
-  const rotateZ = reducedMotion ? 0 : clamp(offset.x / -28, -4, 4)
-  const endX = 50 + offset.x / 7
-  const endY = 25 + offset.y / 18
 
   return (
     <>
-      <svg className="lanyard-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
-        <path
-          d={`M 50 5 C 48 14, ${endX - 8} 17, ${endX} ${endY}`}
-          vectorEffect="non-scaling-stroke"
+      <group position={[-0.9, 2.46, 0]}>
+        <RigidBody ref={fixed} {...segmentProps} type="fixed" />
+        <RigidBody position={[0.52, 0, 0]} ref={j1} {...segmentProps}>
+          <BallCollider args={[0.1]} />
+        </RigidBody>
+        <RigidBody position={[1.04, 0, 0]} ref={j2} {...segmentProps}>
+          <BallCollider args={[0.1]} />
+        </RigidBody>
+        <RigidBody position={[1.56, 0, 0]} ref={j3} {...segmentProps}>
+          <BallCollider args={[0.1]} />
+        </RigidBody>
+        <RigidBody
+          position={[2.02, -1.16, 0]}
+          ref={card}
+          {...segmentProps}
+          type={dragged ? 'kinematicPosition' : 'dynamic'}
+        >
+          <CuboidCollider args={[0.68, 1.06, 0.045]} />
+          <group
+            onPointerOver={() => hover(true)}
+            onPointerOut={() => hover(false)}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+          >
+            <BadgeCard portraitTexture={portraitTexture} />
+          </group>
+        </RigidBody>
+      </group>
+      <mesh ref={band}>
+        <meshLineGeometry />
+        <meshLineMaterial
+          color="#ffffff"
+          depthTest={false}
+          transparent
+          opacity={0.88}
+          resolution={[width, height]}
+          lineWidth={0.34}
         />
-      </svg>
-      <div
-        className="draggable-badge-shell"
-        role="img"
-        tabIndex={0}
-        aria-label="Draggable 3D developer ID badge for Ashraf Ali Hussain Al-Saloul"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onKeyDown={handleKeyDown}
-        style={{
-          '--drag-x': `${offset.x}px`,
-          '--drag-y': `${offset.y}px`,
-          '--rotate-x': `${rotateX}deg`,
-          '--rotate-y': `${rotateY}deg`,
-          '--rotate-z': `${rotateZ}deg`,
-        }}
-      >
-        <BadgeFace />
-      </div>
+      </mesh>
     </>
+  )
+}
+
+function SceneLights() {
+  return (
+    <>
+      <ambientLight intensity={Math.PI * 0.86} />
+      <Physics interpolate gravity={[0, -40, 0]} timeStep={1 / 60}>
+        <PhysicsBadge />
+      </Physics>
+      <Environment background={false} blur={0.72}>
+        <color attach="background" args={['#050505']} />
+        <Lightformer
+          intensity={2}
+          color="white"
+          position={[0, -1, 5]}
+          rotation={[0, 0, Math.PI / 3]}
+          scale={[100, 0.1, 1]}
+        />
+        <Lightformer
+          intensity={3}
+          color="white"
+          position={[-1, -1, 1]}
+          rotation={[0, 0, Math.PI / 3]}
+          scale={[100, 0.1, 1]}
+        />
+        <Lightformer
+          intensity={3}
+          color="white"
+          position={[1, 1, 1]}
+          rotation={[0, 0, Math.PI / 3]}
+          scale={[100, 0.1, 1]}
+        />
+        <Lightformer
+          intensity={7}
+          color="white"
+          position={[-10, 0, 10]}
+          rotation={[0, Math.PI / 2, Math.PI / 3]}
+          scale={[100, 10, 1]}
+        />
+      </Environment>
+    </>
+  )
+}
+
+function StaticBadgeFallback({ reason }) {
+  return (
+    <div className="badge-static-fallback" role="img" aria-label="Static portrait badge fallback">
+      <span className="fallback-lanyard" aria-hidden="true" />
+      <div className="fallback-card">
+        <img src={portraitUrl} alt="" width="220" height="320" draggable="false" />
+      </div>
+      {reason ? <p className="badge-caption">{reason}</p> : null}
+    </div>
   )
 }
 
@@ -215,29 +337,42 @@ function Hero3DIDBadge() {
     setWebglSupported(isWebGLAvailable())
   }, [])
 
+  if (!webglSupported) {
+    return (
+      <div className="badge-stage">
+        <StaticBadgeFallback reason="Static badge fallback shown because WebGL is unavailable." />
+      </div>
+    )
+  }
+
+  if (reducedMotion) {
+    return (
+      <div className="badge-stage">
+        <StaticBadgeFallback reason="Static badge fallback shown because reduced motion is enabled." />
+      </div>
+    )
+  }
+
   return (
-    <div className="badge-stage">
-      {webglSupported ? (
+    <div className="badge-stage" aria-label="Interactive draggable portrait badge with lanyard">
+      <BadgeErrorBoundary>
         <Canvas
           className="badge-canvas"
-          camera={{ position: [0, 0.15, 7.6], fov: 35 }}
+          camera={{ position: [0, 0.25, 10], fov: 30 }}
           dpr={[1, 1.5]}
-          gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-          aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance',
+          }}
         >
-          <AmbientScene reducedMotion={reducedMotion} />
+          <Suspense fallback={null}>
+            <SceneLights />
+          </Suspense>
         </Canvas>
-      ) : (
-        <div className="badge-static-backdrop" aria-hidden="true" />
-      )}
-      <DraggableBadge reducedMotion={reducedMotion} />
-      <p className="badge-caption">
-        {webglSupported
-          ? reducedMotion
-            ? 'Motion reduced by system preference.'
-            : 'Drag the badge to inspect it.'
-          : 'Static badge fallback shown because WebGL is unavailable.'}
-      </p>
+      </BadgeErrorBoundary>
+      <p className="badge-caption">Drag the badge.</p>
     </div>
   )
 }

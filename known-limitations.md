@@ -2,25 +2,24 @@
 
 ## Browser Validation
 
-- Playwright MCP could not run because Chrome was missing from the expected path.
-- Attempting to install Chrome through Playwright failed due system privileges.
-- Microsoft Edge headless was used as the rendered validation fallback.
-- Edge headless emitted internal browser task-manager warnings; these were not app console errors.
+- Playwright MCP could not run because Chrome is missing from the expected path.
+- Installing Chrome through Playwright failed due system privileges.
+- Local Python Playwright with installed Microsoft Edge was used as the browser validation fallback.
+- Microsoft Edge headless may render WebGL slightly differently than a normal visible browser window.
 
 ## Build Output
 
 - `npm.cmd run build` passes.
-- Vite still reports that the Three.js vendor chunk is larger than 500 kB after minification.
-- The 3D code is lazy-loaded and split from the main app, so the initial portfolio bundle remains small.
+- Vite reports large lazy-loaded 3D chunks after minification, mainly from Rapier/Three.js.
+- The 3D badge is lazy-loaded, so the main portfolio content remains separate from the heavy badge chunk.
 
-## Deployment
+## Dependency Audit
 
-- The project is now a Vite React source project.
-- A direct GitHub Pages push from the repository root may need a Pages build workflow or a published `dist/` output.
-- No deployment claim was added.
+- `npm.cmd install` reported 8 dependency audit findings from the npm tree.
+- I did not run `npm audit fix` because this task was scoped to fixing the badge implementation and avoiding unrelated dependency churn.
 
-## 3D Badge
+## Accessibility And Fallback
 
-- The badge uses a React Three Fiber stage plus a draggable 3D-transformed HTML ID card for readability and accessibility.
-- This is intentionally lighter and more stable than copying the sandbox physics/model approach.
-- The local sandbox was used only as a technical reference for interaction direction.
+- Critical profile, project, resume, and contact content remains outside the canvas.
+- WebGL failure and reduced-motion preferences use a static portrait-card fallback.
+- Keyboard users can still access all page CTAs and links; the card drag itself is pointer-based.

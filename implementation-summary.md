@@ -2,52 +2,55 @@
 
 ## What Changed
 
-- Migrated the existing plain HTML/CSS portfolio into a Vite React app.
-- Added a black, minimal, recruiter-focused developer portfolio layout.
-- Added an interactive draggable student/developer ID badge hero section.
-- Added a processed high-contrast black-and-white portrait derived from `My_Image.png`.
-- Added project, skills, resume/CV, about, and contact sections using supported profile/resume evidence.
-- Copied current public assets for the site:
-  - `public/My_Image.png`
-  - `public/resume.pdf`
-  - `public/resume-ats-strict.pdf`
+- Replaced the previous text-heavy HTML/CSS badge overlay with a React Three Fiber badge scene based on the local `3D-event-badge-sandbox` structure.
+- Added Rapier physics through `@react-three/rapier`.
+- Added a MeshLine-rendered lanyard/rope.
+- Added rope joints between the fixed anchor and lanyard segments.
+- Added a spherical joint between the final lanyard segment and the card body.
+- Kept desktop pointer dragging with `kinematicPosition` while the card is held, then returned it to dynamic physics after release.
+- Kept the black minimal portfolio layout, project cards, CV buttons, GitHub/LinkedIn links, and contact section.
+- Added a local `favicon.svg` so browser validation no longer reports a favicon 404.
 
-## 3D Badge
+## Badge Content
 
-- Uses React, React Three Fiber, Three.js, and Drei.
-- Uses original scene geometry and materials.
-- Does not copy Vercel assets, Vercel branding, event badge textures, external models, or copyrighted badge visuals.
-- Uses a draggable HTML ID-card face over a React Three Fiber stage for better accessibility, mobile stability, and readable badge text.
-- Supports keyboard movement with arrow keys and reset with Home when the badge has focus.
-- Respects reduced motion by disabling drag motion effects.
+- The 3D card now uses only the processed portrait asset: `src/assets/my-image-processed.png`.
+- The card no longer includes university, location, target role, stack, GitHub username, email, phone, or metadata labels.
+- No Vercel GLB, Vercel lanyard texture, Vercel branding, or external badge assets are used.
 
-## Portfolio Content
+## Sandbox Alignment
 
-- Shows the required projects:
-  - Machine Learning-Based System for Cardiopulmonary Sound Separation
-  - FalconOCR
-  - Unlock PDF
-  - Personal Portfolio Website
-- Keeps FYP wording academic and prototype-based.
-- Keeps Unlock PDF wording focused on user-owned or authorized documents.
-- Does not include unsupported metrics, user counts, deployment claims, clinical claims, or friend/third-party projects.
+- Preserved the sandbox-style physics pattern:
+  - fixed anchor body
+  - three lanyard segment rigid bodies
+  - `useRopeJoint` chain
+  - `useSphericalJoint` card attachment
+  - `CuboidCollider` card body
+  - pointer capture for dragging
+  - body wake-up during drag
+  - smoothed Catmull-Rom curve for the lanyard
+  - MeshLine lanyard rendering
 
 ## Validation Summary
 
-- `npm.cmd install` completed.
+- `npm.cmd install` completed after adding physics dependencies.
 - `npm.cmd run build` passed.
-- Vite dev server ran at `http://127.0.0.1:5173`.
-- Desktop and mobile first-viewport screenshots were captured with Microsoft Edge headless.
-- Rendered DOM checks confirmed:
-  - Main heading rendered.
-  - 4 project cards rendered.
-  - Resume links rendered.
-  - LinkedIn and GitHub links rendered.
-- Local asset checks returned HTTP 200 for:
-  - `/resume.pdf`
-  - `/resume-ats-strict.pdf`
-  - `/My_Image.png`
+- `dist/index.html` exists after build.
+- Python Playwright with installed Microsoft Edge checked the production `dist` build.
+- Desktop check confirmed:
+  - main heading rendered
+  - 4 project cards rendered
+  - 3D canvas rendered
+  - resume PDF returned HTTP 200
+  - ATS resume PDF returned HTTP 200
+  - GitHub and LinkedIn links are present
+  - drag interaction was exercised with mouse events
+- Mobile check confirmed:
+  - 4 project cards rendered
+  - 3D canvas rendered
+  - 5 hero buttons rendered
+  - no horizontal overflow
+- Browser console check returned no app console errors.
 
 ## Validation Caveat
 
-Playwright MCP was available but could not launch because Chrome was not installed at the expected path. Installing Chrome through Playwright failed due system privileges. Microsoft Edge headless was used as the rendered browser fallback.
+Playwright MCP could not launch because Chrome is missing at the expected path, and installing Chrome through Playwright failed due system privileges. Local Python Playwright with Microsoft Edge was used for the rendered checks instead.

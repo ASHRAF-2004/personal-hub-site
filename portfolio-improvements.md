@@ -1,24 +1,20 @@
 # Portfolio Improvements
 
-## Completed Improvements
+## Completed In This Fix
 
-- Replaced the older personal hub layout with a focused internship portfolio.
-- Added a professional black minimal theme with high-contrast text.
-- Added a 3D-inspired draggable developer ID badge hero section.
-- Added a processed black-and-white portrait on the badge.
-- Added clear CTA buttons for projects, resume, GitHub, LinkedIn, and contact.
-- Added four honest project cards with status, description, stack, role, highlight, and links.
-- Added grouped technical skills.
-- Added dedicated resume/CV download section.
-- Added clear contact links.
-- Added mobile responsive styling and removed mobile nav clipping.
-- Added WebGL fallback behavior for the badge stage.
-- Added reduced-motion handling.
+- Removed the previous flat ID-card overlay with personal text.
+- Rebuilt the badge around Rapier physics instead of CSS-only movement.
+- Added a visible MeshLine lanyard.
+- Added rope joints and a spherical card attachment following the sandbox structure.
+- Kept the card draggable on desktop through pointer capture and kinematic movement.
+- Kept the card image-only, using the processed monochrome portrait.
+- Preserved the black minimal portfolio theme.
+- Preserved Projects, About, Skills, Resume, and Contact sections.
+- Added a local favicon to avoid browser console noise.
 
 ## Suggested Next Improvements
 
-- Add a short project screenshot or demo media for each project when available.
-- Add a GitHub Pages build/deploy workflow if you want automatic deployment from source.
-- Add lightweight route or hash testing after deployment.
-- Add project README updates so each portfolio card links to stronger repository evidence.
-- Consider replacing the older large video and unused legacy assets if they are no longer needed.
+- Tune the lanyard/card sizing after reviewing it in a normal desktop browser, since headless rendering can differ slightly from a visible GPU-backed browser.
+- Add lightweight project screenshots when each repository has a clean visual worth showing.
+- Add a small automated smoke test script for heading, project count, resume links, and core external links.
+- Consider a future bundle-size pass if the 3D badge load becomes noticeable on slower devices.
