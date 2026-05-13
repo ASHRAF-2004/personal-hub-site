@@ -1,0 +1,22 @@
+{
+  "name": "ashraf-2004-github-io",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@react-three/drei": "9.96.4",
+    "@react-three/fiber": "8.15.15",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "three": "0.160.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.3.4",
+    "vite": "5.4.11"
+  }
+}
