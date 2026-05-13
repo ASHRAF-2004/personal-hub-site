@@ -2,55 +2,54 @@
 
 ## What Changed
 
-- Replaced the previous text-heavy HTML/CSS badge overlay with a React Three Fiber badge scene based on the local `3D-event-badge-sandbox` structure.
-- Added Rapier physics through `@react-three/rapier`.
-- Added a MeshLine-rendered lanyard/rope.
-- Added rope joints between the fixed anchor and lanyard segments.
-- Added a spherical joint between the final lanyard segment and the card body.
-- Kept desktop pointer dragging with `kinematicPosition` while the card is held, then returned it to dynamic physics after release.
-- Kept the black minimal portfolio layout, project cards, CV buttons, GitHub/LinkedIn links, and contact section.
-- Added a local `favicon.svg` so browser validation no longer reports a favicon 404.
+- Refined the hero badge correction instead of redesigning the full portfolio.
+- Kept the existing portfolio content, project cards, CV buttons, skills, about, and contact sections.
+- Removed the visible bordered/boxed badge stage from the hero.
+- Increased the badge scene footprint and adjusted the camera/anchor positioning so the badge is a stronger hero focal point.
+- Reworked the badge physics setup to stay closer to the local `3D-event-badge-sandbox`:
+  - camera position `[0, 0, 13]`
+  - `fov: 25`
+  - gravity `[0, -40, 0]`
+  - three rope joints
+  - spherical joint to the card
+  - `kinematicPosition` dragging while held
+  - MeshLine lanyard rendering
+- Added a local brand-neutral lanyard texture at `public/band-neutral.png`.
+
+## Lanyard Texture
+
+- The exact sandbox texture URL was tested and downloaded locally during implementation.
+- It visibly contains `Vercel Ship` branding and was blocked by the rendered browser check when loaded remotely.
+- To avoid showing copied Vercel branding on the portfolio, the live badge uses a local brand-neutral texture with the same MeshLine texture/repeat approach.
+- The original `band.jpg` file is not kept in the project.
 
 ## Badge Content
 
-- The 3D card now uses only the processed portrait asset: `src/assets/my-image-processed.png`.
-- The card no longer includes university, location, target role, stack, GitHub username, email, phone, or metadata labels.
-- No Vercel GLB, Vercel lanyard texture, Vercel branding, or external badge assets are used.
-
-## Sandbox Alignment
-
-- Preserved the sandbox-style physics pattern:
-  - fixed anchor body
-  - three lanyard segment rigid bodies
-  - `useRopeJoint` chain
-  - `useSphericalJoint` card attachment
-  - `CuboidCollider` card body
-  - pointer capture for dragging
-  - body wake-up during drag
-  - smoothed Catmull-Rom curve for the lanyard
-  - MeshLine lanyard rendering
+- The badge card uses `src/assets/my-image-processed.png`.
+- The card still avoids extra personal text and metadata.
+- No university, location, target role, stack, GitHub username, phone, email, student ID, or metadata labels are shown on the card.
 
 ## Validation Summary
 
-- `npm.cmd install` completed after adding physics dependencies.
 - `npm.cmd run build` passed.
 - `dist/index.html` exists after build.
-- Python Playwright with installed Microsoft Edge checked the production `dist` build.
+- Rendered validation used Python Playwright with installed Microsoft Edge.
 - Desktop check confirmed:
-  - main heading rendered
-  - 4 project cards rendered
   - 3D canvas rendered
-  - resume PDF returned HTTP 200
-  - ATS resume PDF returned HTTP 200
+  - badge stage border width is `0px`
+  - local lanyard texture returned HTTP 200
+  - 4 project cards rendered
+  - resume PDFs returned HTTP 200
   - GitHub and LinkedIn links are present
-  - drag interaction was exercised with mouse events
+  - mouse drag was exercised against the badge scene
 - Mobile check confirmed:
-  - 4 project cards rendered
   - 3D canvas rendered
+  - 4 project cards rendered
   - 5 hero buttons rendered
   - no horizontal overflow
-- Browser console check returned no app console errors.
+  - badge stage border width is `0px`
+- Browser console returned no app errors.
 
 ## Validation Caveat
 
-Playwright MCP could not launch because Chrome is missing at the expected path, and installing Chrome through Playwright failed due system privileges. Local Python Playwright with Microsoft Edge was used for the rendered checks instead.
+Playwright MCP could not be used because the expected Chrome installation is unavailable on this machine. Python Playwright with Microsoft Edge was used as the practical rendered validation path.

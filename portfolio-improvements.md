@@ -1,20 +1,21 @@
 # Portfolio Improvements
 
-## Completed In This Fix
+## Completed In This Correction
 
-- Removed the previous flat ID-card overlay with personal text.
-- Rebuilt the badge around Rapier physics instead of CSS-only movement.
-- Added a visible MeshLine lanyard.
-- Added rope joints and a spherical card attachment following the sandbox structure.
-- Kept the card draggable on desktop through pointer capture and kinematic movement.
-- Kept the card image-only, using the processed monochrome portrait.
-- Preserved the black minimal portfolio theme.
-- Preserved Projects, About, Skills, Resume, and Contact sections.
-- Added a local favicon to avoid browser console noise.
+- Removed the visible framed badge container.
+- Made the 3D badge larger and more prominent in the hero.
+- Moved the badge into open hero space instead of a boxed panel.
+- Restored the sandbox-like camera and hanging setup more closely.
+- Kept Rapier rope joints, spherical joint, physics dragging, and MeshLine rendering.
+- Replaced the plain white lanyard with a textured strap.
+- Added a brand-neutral strap texture so the lanyard reads closer to the sandbox without displaying Vercel branding.
+- Aligned the card visual with the lanyard attachment point so the strap appears attached to the holder.
+- Preserved the image-only card rule.
+- Preserved all existing portfolio content and links.
 
 ## Suggested Next Improvements
 
-- Tune the lanyard/card sizing after reviewing it in a normal desktop browser, since headless rendering can differ slightly from a visible GPU-backed browser.
-- Add lightweight project screenshots when each repository has a clean visual worth showing.
-- Add a small automated smoke test script for heading, project count, resume links, and core external links.
-- Consider a future bundle-size pass if the 3D badge load becomes noticeable on slower devices.
+- Replace the generated neutral strap texture with a custom real lanyard texture that belongs to this portfolio.
+- Provide a higher-resolution portrait with transparent or black background for a cleaner badge texture.
+- Consider tuning the badge on a visible browser/GPU window after review, since headless Edge can render WebGL slightly differently.
+- Add a small smoke test script for project count, resume links, and hero canvas presence.

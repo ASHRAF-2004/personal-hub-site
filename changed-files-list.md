@@ -1,16 +1,20 @@
 # Changed Files List
 
-## Badge Fix
+## Badge And Hero
 
 - `src/components/Hero3DIDBadge.jsx`
 - `src/index.css`
 
-## Dependency And Build Files
+## Assets
 
+- `public/band-neutral.png`
+- `public/favicon.svg`
+
+## Existing Files Touched Earlier And Still Present
+
+- `index.html`
 - `package.json`
 - `package-lock.json`
-- `index.html`
-- `public/favicon.svg`
 
 ## Deliverables
 
@@ -19,13 +23,6 @@
 - `setup-run-instructions.md`
 - `portfolio-improvements.md`
 - `known-limitations.md`
-
-## Existing Assets Used
-
-- `src/assets/my-image-processed.png`
-- `public/My_Image.png`
-- `public/resume.pdf`
-- `public/resume-ats-strict.pdf`
 
 ## Generated But Ignored
 

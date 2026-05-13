@@ -24,17 +24,17 @@ http://127.0.0.1:5173
 npm.cmd run build
 ```
 
-Build output is generated in:
+Build output:
 
 ```text
 dist/
 ```
 
-## Validation Notes
+## Notes
 
 - The project is a Vite React app.
-- The Vite base is `/`, which matches the `ASHRAF-2004/ashraf-2004.github.io` user-site repository setup.
-- The 3D badge depends on `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, `three`, and `meshline`.
-- The 3D card uses `src/assets/my-image-processed.png`.
-- CV files are served from `public/resume.pdf` and `public/resume-ats-strict.pdf`.
-- If Playwright MCP cannot launch Chrome on this machine, Python Playwright can use installed Microsoft Edge for local rendered checks.
+- The Vite base is `/` for the GitHub Pages user-site repository.
+- The badge uses React Three Fiber, Drei, Rapier, Three.js, and MeshLine.
+- The card portrait asset is `src/assets/my-image-processed.png`.
+- The lanyard texture asset is `public/band-neutral.png`.
+- Resume files are served from `public/resume.pdf` and `public/resume-ats-strict.pdf`.

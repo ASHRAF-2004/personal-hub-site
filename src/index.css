@@ -170,7 +170,7 @@ section {
 .hero-section {
   min-height: calc(100vh - 72px);
   display: grid;
-  grid-template-columns: minmax(0, 0.94fr) minmax(360px, 0.86fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 0.95fr);
   align-items: center;
   gap: clamp(28px, 5vw, 72px);
   padding: clamp(44px, 7vw, 88px) 0;
@@ -258,25 +258,15 @@ h1 {
 
 .badge-stage {
   position: relative;
-  min-height: 610px;
+  width: min(100%, 650px);
+  min-height: clamp(620px, 73vh, 760px);
   display: grid;
+  justify-self: end;
   place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background:
-    radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.13), transparent 18rem),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
-  overflow: hidden;
+  background: radial-gradient(circle at 52% 42%, rgba(255, 255, 255, 0.14), transparent 20rem);
+  overflow: visible;
   perspective: 1000px;
-  touch-action: manipulation;
-}
-
-.badge-stage::after {
-  position: absolute;
-  inset: auto 18px 18px;
-  height: 1px;
-  content: "";
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+  touch-action: pan-y;
 }
 
 .badge-canvas {

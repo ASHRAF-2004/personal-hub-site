@@ -15,6 +15,10 @@ import portraitUrl from '../assets/my-image-processed.png'
 
 extend({ MeshLineGeometry, MeshLineMaterial })
 
+const BAND_TEXTURE_URL = '/band-neutral.png'
+
+useTexture.preload(BAND_TEXTURE_URL)
+
 function useReducedMotion() {
   const [reducedMotion, setReducedMotion] = useState(false)
 
@@ -67,34 +71,34 @@ class BadgeErrorBoundary extends Component {
 
 function BadgeCard({ portraitTexture }) {
   return (
-    <group>
-      <RoundedBox args={[1.36, 2.12, 0.09]} radius={0.055} smoothness={8}>
+    <group position={[0, 0.4, 0]}>
+      <RoundedBox args={[0.82, 1.18, 0.055]} radius={0.035} smoothness={8}>
         <meshPhysicalMaterial
-          color="#070707"
-          roughness={0.34}
-          metalness={0.38}
-          clearcoat={0.9}
-          clearcoatRoughness={0.22}
+          color="#050505"
+          roughness={0.3}
+          metalness={0.5}
+          clearcoat={1}
+          clearcoatRoughness={0.15}
         />
       </RoundedBox>
 
-      <mesh position={[0, 0, 0.052]}>
-        <planeGeometry args={[1.21, 1.94]} />
+      <mesh position={[0, -0.02, 0.034]}>
+        <planeGeometry args={[0.68, 1.0]} />
         <meshBasicMaterial map={portraitTexture} toneMapped={false} />
       </mesh>
 
-      <mesh position={[0, 1.13, 0.072]}>
-        <boxGeometry args={[0.44, 0.1, 0.075]} />
-        <meshStandardMaterial color="#d8d8d8" metalness={0.82} roughness={0.2} />
+      <mesh position={[0, 0.68, 0.042]}>
+        <boxGeometry args={[0.36, 0.08, 0.055]} />
+        <meshStandardMaterial color="#d7d7d7" metalness={0.82} roughness={0.22} />
       </mesh>
 
-      <mesh position={[0, 1.24, 0.08]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.15, 0.017, 12, 48]} />
-        <meshStandardMaterial color="#f2f2f2" metalness={0.9} roughness={0.18} />
+      <mesh position={[0, 0.78, 0.047]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.13, 0.014, 12, 48]} />
+        <meshStandardMaterial color="#f4f4f4" metalness={0.9} roughness={0.16} />
       </mesh>
 
-      <mesh position={[0, -1.09, 0.056]}>
-        <boxGeometry args={[1.1, 0.015, 0.012]} />
+      <mesh position={[0, -0.61, 0.035]}>
+        <boxGeometry args={[0.64, 0.012, 0.01]} />
         <meshBasicMaterial color="#ffffff" transparent opacity={0.32} />
       </mesh>
     </group>
@@ -122,6 +126,7 @@ function PhysicsBadge({ maxSpeed = 50, minSpeed = 10 }) {
   }
 
   const portraitTexture = useTexture(portraitUrl)
+  const bandTexture = useTexture(BAND_TEXTURE_URL)
   const { width, height } = useThree((state) => state.size)
   const [curve] = useState(
     () =>
@@ -143,24 +148,30 @@ function PhysicsBadge({ maxSpeed = 50, minSpeed = 10 }) {
     portraitTexture.needsUpdate = true
   }, [portraitTexture])
 
+  useEffect(() => {
+    bandTexture.wrapS = bandTexture.wrapT = THREE.RepeatWrapping
+    bandTexture.anisotropy = 16
+    bandTexture.needsUpdate = true
+  }, [bandTexture])
+
   useRopeJoint(fixed, j1, [
     [0, 0, 0],
     [0, 0, 0],
-    0.68,
+    1,
   ])
   useRopeJoint(j1, j2, [
     [0, 0, 0],
     [0, 0, 0],
-    0.68,
+    1,
   ])
   useRopeJoint(j2, j3, [
     [0, 0, 0],
     [0, 0, 0],
-    0.68,
+    1,
   ])
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 1.22, 0],
+    [0, 1.45, 0],
   ])
 
   useEffect(() => {
@@ -231,25 +242,27 @@ function PhysicsBadge({ maxSpeed = 50, minSpeed = 10 }) {
 
   return (
     <>
-      <group position={[-0.9, 2.46, 0]}>
+      <group position={[-0.18, 4.7, 0]}>
         <RigidBody ref={fixed} {...segmentProps} type="fixed" />
-        <RigidBody position={[0.52, 0, 0]} ref={j1} {...segmentProps}>
+        <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps}>
           <BallCollider args={[0.1]} />
         </RigidBody>
-        <RigidBody position={[1.04, 0, 0]} ref={j2} {...segmentProps}>
+        <RigidBody position={[1, 0, 0]} ref={j2} {...segmentProps}>
           <BallCollider args={[0.1]} />
         </RigidBody>
-        <RigidBody position={[1.56, 0, 0]} ref={j3} {...segmentProps}>
+        <RigidBody position={[1.5, 0, 0]} ref={j3} {...segmentProps}>
           <BallCollider args={[0.1]} />
         </RigidBody>
         <RigidBody
-          position={[2.02, -1.16, 0]}
+          position={[2, 0, 0]}
           ref={card}
           {...segmentProps}
           type={dragged ? 'kinematicPosition' : 'dynamic'}
         >
-          <CuboidCollider args={[0.68, 1.06, 0.045]} />
+          <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
+            scale={2.25}
+            position={[0, -1.2, -0.05]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
             onPointerDown={handlePointerDown}
@@ -268,7 +281,10 @@ function PhysicsBadge({ maxSpeed = 50, minSpeed = 10 }) {
           transparent
           opacity={0.88}
           resolution={[width, height]}
-          lineWidth={0.34}
+          useMap
+          map={bandTexture}
+          repeat={[-3, 1]}
+          lineWidth={1}
         />
       </mesh>
     </>
@@ -282,7 +298,7 @@ function SceneLights() {
       <Physics interpolate gravity={[0, -40, 0]} timeStep={1 / 60}>
         <PhysicsBadge />
       </Physics>
-      <Environment background={false} blur={0.72}>
+      <Environment background={false} blur={0.75}>
         <color attach="background" args={['#050505']} />
         <Lightformer
           intensity={2}
@@ -308,7 +324,7 @@ function SceneLights() {
         <Lightformer
           intensity={7}
           color="white"
-          position={[-10, 0, 10]}
+          position={[-10, 0, 14]}
           rotation={[0, Math.PI / 2, Math.PI / 3]}
           scale={[100, 10, 1]}
         />
@@ -354,11 +370,11 @@ function Hero3DIDBadge() {
   }
 
   return (
-    <div className="badge-stage" aria-label="Interactive draggable portrait badge with lanyard">
+      <div className="badge-stage" aria-label="Interactive draggable portrait badge with lanyard">
       <BadgeErrorBoundary>
         <Canvas
           className="badge-canvas"
-          camera={{ position: [0, 0.25, 10], fov: 30 }}
+          camera={{ position: [0, 0, 13], fov: 25 }}
           dpr={[1, 1.5]}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
           gl={{
@@ -372,7 +388,6 @@ function Hero3DIDBadge() {
           </Suspense>
         </Canvas>
       </BadgeErrorBoundary>
-      <p className="badge-caption">Drag the badge.</p>
     </div>
   )
 }
