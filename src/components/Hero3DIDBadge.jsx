@@ -1,5 +1,5 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import portraitUrl from '../assets/ashraf-portrait.webp'
+import portraitUrl from '../assets/ashraf-badge-crop.webp'
 
 const PhysicsBadgeScene = lazy(() => import('./PhysicsBadgeScene.jsx'))
 
