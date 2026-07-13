@@ -3,7 +3,7 @@ import portraitUrl from '../assets/ashraf-portrait.webp'
 
 const PhysicsBadgeScene = lazy(() => import('./PhysicsBadgeScene.jsx'))
 
-const STATIC_BADGE_QUERY = '(max-width: 720px), (pointer: coarse)'
+const STATIC_BADGE_QUERY = '(max-width: 720px)'
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
 
 function getMediaQuery(query) {
@@ -76,8 +76,9 @@ function isWebGLAvailable() {
   try {
     const canvas = document.createElement('canvas')
     const context =
-      canvas.getContext('webgl2', { failIfMajorPerformanceCaveat: true }) ||
-      canvas.getContext('webgl', { failIfMajorPerformanceCaveat: true })
+      canvas.getContext('webgl2') ||
+      canvas.getContext('webgl') ||
+      canvas.getContext('experimental-webgl')
 
     context?.getExtension('WEBGL_lose_context')?.loseContext()
     return Boolean(context)
@@ -90,10 +91,7 @@ function prefersLightweightExperience() {
   if (typeof navigator === 'undefined') return true
 
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
-  const limitedMemory = navigator.deviceMemory && navigator.deviceMemory <= 4
-  const limitedCpu = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2
-
-  return Boolean(connection?.saveData || limitedMemory || limitedCpu)
+  return Boolean(connection?.saveData)
 }
 
 class SceneErrorBoundary extends Component {

@@ -12,7 +12,7 @@
 
 - Split the badge into a lightweight static shell and a separately imported physics scene.
 - Deferred Three.js and Rapier until the badge is near the viewport and the browser is idle.
-- Kept mobile, coarse-pointer, reduced-motion, data-saver, low-resource, and WebGL-failure paths static so they never request the physics scene.
+- Kept narrow mobile, reduced-motion, data-saver, and WebGL-failure paths static so they never request the physics scene.
 - Added offscreen and hidden-tab pausing, a lower DPR cap, simpler lighting and materials, thinner card geometry, gentler physics, bounded dragging, and pointer cleanup.
 - Replaced the allocation-heavy MeshLine curve with reusable textured strap segments.
 

@@ -2,9 +2,11 @@ import * as THREE from 'three'
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import {
+  BallCollider,
   CuboidCollider,
   Physics,
   RigidBody,
+  useRapier,
   useRopeJoint,
   useSphericalJoint,
 } from '@react-three/rapier'
@@ -22,6 +24,10 @@ const GRAVITY = [0, -24, 0]
 const CARD_ANCHOR = [0, 1.35, 0]
 const CARD_ANCHOR_VECTOR = new THREE.Vector3(...CARD_ANCHOR)
 const X_AXIS = new THREE.Vector3(1, 0, 0)
+const ZERO_VELOCITY = { x: 0, y: 0, z: 0 }
+const MAX_ROPE_REACH = 2.3
+const MAX_DRAG_STEP = 0.22
+const MAX_DRAG_SPEED = MAX_DRAG_STEP * 60
 const DRAG_LIMITS = {
   minX: -2.2,
   maxX: 2.2,
@@ -125,22 +131,22 @@ function PhysicsBadge({ active }) {
   const jointOne = useRef(null)
   const jointTwo = useRef(null)
   const card = useRef(null)
-  const strapOne = useRef(null)
-  const strapTwo = useRef(null)
-  const strapThree = useRef(null)
+  const strap = useRef(null)
   const dragOffset = useRef(new THREE.Vector3())
   const hovering = useRef(false)
   const [dragging, setDragging] = useState(false)
   const portraitTexture = useLoader(THREE.TextureLoader, portraitUrl)
   const lanyardTexture = useLoader(THREE.TextureLoader, lanyardTextureUrl)
   const { camera, gl } = useThree()
+  const { rapier } = useRapier()
   const scratch = useMemo(
     () => ({
       cardAnchor: new THREE.Vector3(),
+      anchorOffset: new THREE.Vector3(),
+      attachmentDelta: new THREE.Vector3(),
+      attachmentTarget: new THREE.Vector3(),
       cardPosition: new THREE.Vector3(),
       direction: new THREE.Vector3(),
-      jointOnePosition: new THREE.Vector3(),
-      jointTwoPosition: new THREE.Vector3(),
       fixedPosition: new THREE.Vector3(),
       midpoint: new THREE.Vector3(),
       pointer: new THREE.Vector3(),
@@ -208,11 +214,14 @@ function PhysicsBadge({ active }) {
     }
 
     setDragging(false)
+    card.current?.setBodyType(rapier.RigidBodyType.Dynamic, true)
+    card.current?.setLinvel(ZERO_VELOCITY, true)
+    card.current?.setAngvel(ZERO_VELOCITY, true)
     hovering.current = false
     gl.domElement.style.cursor = ''
     document.body.classList.remove('is-dragging-badge')
     return undefined
-  }, [active, gl])
+  }, [active, gl, rapier])
 
   useEffect(
     () => () => {
@@ -222,10 +231,15 @@ function PhysicsBadge({ active }) {
     [gl],
   )
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (!active || !fixed.current || !jointOne.current || !jointTwo.current || !card.current) {
       return
     }
+
+    scratch.fixedPosition.copy(fixed.current.translation())
+    scratch.cardPosition.copy(card.current.translation())
+    scratch.rotation.copy(card.current.rotation())
+    scratch.anchorOffset.copy(CARD_ANCHOR_VECTOR).applyQuaternion(scratch.rotation)
 
     if (dragging) {
       scratch.pointer.set(state.pointer.x, state.pointer.y, 0.5).unproject(camera)
@@ -242,6 +256,21 @@ function PhysicsBadge({ active }) {
         THREE.MathUtils.clamp(scratch.target.z, DRAG_LIMITS.minZ, DRAG_LIMITS.maxZ),
       )
 
+      scratch.attachmentTarget.copy(scratch.target).add(scratch.anchorOffset)
+      scratch.attachmentDelta.copy(scratch.attachmentTarget).sub(scratch.fixedPosition)
+      if (scratch.attachmentDelta.lengthSq() > MAX_ROPE_REACH * MAX_ROPE_REACH) {
+        scratch.attachmentDelta.setLength(MAX_ROPE_REACH)
+        scratch.attachmentTarget.copy(scratch.fixedPosition).add(scratch.attachmentDelta)
+        scratch.target.copy(scratch.attachmentTarget).sub(scratch.anchorOffset)
+      }
+
+      const maxDragStep = Math.min(MAX_DRAG_SPEED * delta, MAX_DRAG_STEP)
+      scratch.attachmentDelta.copy(scratch.target).sub(scratch.cardPosition)
+      if (scratch.attachmentDelta.lengthSq() > maxDragStep * maxDragStep) {
+        scratch.attachmentDelta.setLength(maxDragStep)
+        scratch.target.copy(scratch.cardPosition).add(scratch.attachmentDelta)
+      }
+
       fixed.current.wakeUp()
       jointOne.current.wakeUp()
       jointTwo.current.wakeUp()
@@ -249,40 +278,24 @@ function PhysicsBadge({ active }) {
       card.current.setNextKinematicTranslation(scratch.target)
     }
 
-    scratch.fixedPosition.copy(fixed.current.translation())
-    scratch.jointOnePosition.copy(jointOne.current.translation())
-    scratch.jointTwoPosition.copy(jointTwo.current.translation())
     scratch.cardPosition.copy(card.current.translation())
-    scratch.rotation.copy(card.current.rotation())
     scratch.cardAnchor
-      .copy(CARD_ANCHOR_VECTOR)
-      .applyQuaternion(scratch.rotation)
+      .copy(scratch.anchorOffset)
       .add(scratch.cardPosition)
 
-    updateStrapSegment(
-      strapOne.current,
-      scratch.fixedPosition,
-      scratch.jointOnePosition,
-      scratch,
-    )
-    updateStrapSegment(
-      strapTwo.current,
-      scratch.jointOnePosition,
-      scratch.jointTwoPosition,
-      scratch,
-    )
-    updateStrapSegment(
-      strapThree.current,
-      scratch.jointTwoPosition,
-      scratch.cardAnchor,
-      scratch,
-    )
+    updateStrapSegment(strap.current, scratch.fixedPosition, scratch.cardAnchor, scratch)
   })
 
   const handlePointerDown = (event) => {
     event.stopPropagation()
     event.target.setPointerCapture(event.pointerId)
     dragOffset.current.copy(event.point).sub(scratch.cardPosition.copy(card.current.translation()))
+    card.current.setBodyType(rapier.RigidBodyType.KinematicPositionBased, true)
+    card.current.setLinvel(ZERO_VELOCITY, true)
+    card.current.setAngvel(ZERO_VELOCITY, true)
+    fixed.current?.wakeUp()
+    jointOne.current?.wakeUp()
+    jointTwo.current?.wakeUp()
     setDragging(true)
     gl.domElement.style.cursor = 'grabbing'
     document.body.classList.add('is-dragging-badge')
@@ -293,6 +306,13 @@ function PhysicsBadge({ active }) {
     if (event.target.hasPointerCapture?.(event.pointerId)) {
       event.target.releasePointerCapture(event.pointerId)
     }
+    card.current?.setBodyType(rapier.RigidBodyType.Dynamic, true)
+    card.current?.setLinvel(ZERO_VELOCITY, true)
+    card.current?.setAngvel(ZERO_VELOCITY, true)
+    fixed.current?.wakeUp()
+    jointOne.current?.wakeUp()
+    jointTwo.current?.wakeUp()
+    card.current?.wakeUp()
     setDragging(false)
     gl.domElement.style.cursor = hovering.current ? 'grab' : ''
     document.body.classList.remove('is-dragging-badge')
@@ -302,14 +322,18 @@ function PhysicsBadge({ active }) {
     <>
       <group position={[-0.1, 4.55, 0]}>
         <RigidBody ref={fixed} {...SEGMENT_PROPS} type="fixed" />
-        <RigidBody position={[0.35, -1.05, 0]} ref={jointOne} {...SEGMENT_PROPS} />
-        <RigidBody position={[0.65, -2.15, 0]} ref={jointTwo} {...SEGMENT_PROPS} />
+        <RigidBody position={[0.35, -1.05, 0]} ref={jointOne} {...SEGMENT_PROPS}>
+          <BallCollider args={[0.07]} mass={0.05} sensor />
+        </RigidBody>
+        <RigidBody position={[0.65, -2.15, 0]} ref={jointTwo} {...SEGMENT_PROPS}>
+          <BallCollider args={[0.07]} mass={0.05} sensor />
+        </RigidBody>
         <RigidBody
           position={[0.65, -3.45, 0]}
           ref={card}
           {...SEGMENT_PROPS}
           enabledRotations={[true, false, true]}
-          type={dragging ? 'kinematicPosition' : 'dynamic'}
+          type="dynamic"
         >
           <CuboidCollider args={[0.86, 1.22, 0.025]} position={[0, -0.12, 0]} />
           <group
@@ -332,15 +356,13 @@ function PhysicsBadge({ active }) {
         </RigidBody>
       </group>
 
-      <mesh ref={strapOne} geometry={strapGeometry} material={strapMaterial} />
-      <mesh ref={strapTwo} geometry={strapGeometry} material={strapMaterial} />
-      <mesh ref={strapThree} geometry={strapGeometry} material={strapMaterial} />
+      <mesh ref={strap} geometry={strapGeometry} material={strapMaterial} />
     </>
   )
 }
 
-function SceneLifecycle({ onError, onReady }) {
-  const { gl } = useThree()
+function SceneLifecycle({ active, onError, onReady }) {
+  const { gl, invalidate } = useThree()
   const ready = useRef(false)
 
   useFrame(() => {
@@ -361,6 +383,10 @@ function SceneLifecycle({ onError, onReady }) {
     return () => canvas.removeEventListener('webglcontextlost', handleContextLost)
   }, [gl, onError])
 
+  useEffect(() => {
+    invalidate()
+  }, [active, invalidate])
+
   return null
 }
 
@@ -372,7 +398,7 @@ function Scene({ active, onError, onReady }) {
       <Physics gravity={GRAVITY} interpolate paused={!active} timeStep={1 / 60}>
         <PhysicsBadge active={active} />
       </Physics>
-      <SceneLifecycle onError={onError} onReady={onReady} />
+      <SceneLifecycle active={active} onError={onError} onReady={onReady} />
     </>
   )
 }
@@ -385,7 +411,7 @@ function PhysicsBadgeScene({ active, onError, onReady }) {
       camera={CAMERA}
       dpr={[1, 1.35]}
       fallback={null}
-      frameloop={active ? 'always' : 'never'}
+      frameloop={active ? 'always' : 'demand'}
       gl={GL_OPTIONS}
       onCreated={({ gl }) => gl.setClearColor('#000000', 0)}
       style={CANVAS_STYLE}

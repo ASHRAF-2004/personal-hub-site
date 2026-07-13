@@ -2,7 +2,7 @@
 
 ## Deferred 3D Bundle
 
-The desktop physics scene remains a large optional download because it contains Three.js and Rapier. It is isolated in a dynamic chunk and is not preloaded by the initial document. Small screens, coarse pointers, reduced-motion users, data-saver or low-resource devices, and WebGL fallback users remain on the static badge and do not request this chunk.
+The desktop physics scene remains a large optional download because it contains Three.js and Rapier. It is isolated in a dynamic chunk and is not preloaded by the initial document. Narrow screens, reduced-motion users, data-saver connections, and WebGL fallback users remain on the static badge and do not request this chunk.
 
 ## Automated LinkedIn Check
 
