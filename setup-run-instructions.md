@@ -1,40 +1,34 @@
 # Setup And Run Instructions
 
-## Install Dependencies
+## Requirements
 
-```bash
-npm.cmd install
+- Node.js 20.19 or newer
+- npm
+
+## Install
+
+```powershell
+npm install
 ```
 
-## Run Locally
+## Develop
 
-```bash
-npm.cmd run dev -- --port 5173
+```powershell
+npm run dev
 ```
 
-Local URL:
-
-```text
-http://127.0.0.1:5173
-```
+The default local URL is `http://127.0.0.1:5173/`.
 
 ## Build
 
-```bash
-npm.cmd run build
+```powershell
+npm run build
 ```
 
-Build output:
+## Preview The Production Build
 
-```text
-dist/
+```powershell
+npm run preview
 ```
 
-## Notes
-
-- The project is a Vite React app.
-- The Vite base is `/` for the GitHub Pages user-site repository.
-- The badge uses React Three Fiber, Drei, Rapier, Three.js, and MeshLine.
-- The card portrait asset is `src/assets/my-image-processed.png`.
-- The lanyard texture asset is `public/band-neutral.png`.
-- Resume files are served from `public/resume.pdf` and `public/resume-ats-strict.pdf`.
+Resume, portrait, moon, and lanyard assets are imported from `src/assets` so Vite emits hashed production URLs. The 3D scene is loaded dynamically only for eligible desktop browsers.

@@ -1,52 +1,102 @@
-import * as THREE from 'three'
-import { Component, Suspense, useEffect, useRef, useState } from 'react'
-import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
-import { Environment, Lightformer, RoundedBox, useTexture } from '@react-three/drei'
-import {
-  BallCollider,
-  CuboidCollider,
-  Physics,
-  RigidBody,
-  useRopeJoint,
-  useSphericalJoint,
-} from '@react-three/rapier'
-import { MeshLineGeometry, MeshLineMaterial } from 'meshline'
-import portraitUrl from '../assets/my-image-processed.png'
+import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import portraitUrl from '../assets/ashraf-portrait.webp'
 
-extend({ MeshLineGeometry, MeshLineMaterial })
+const PhysicsBadgeScene = lazy(() => import('./PhysicsBadgeScene.jsx'))
 
-const BAND_TEXTURE_URL = '/band-neutral.png'
+const STATIC_BADGE_QUERY = '(max-width: 720px), (pointer: coarse)'
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
 
-useTexture.preload(BAND_TEXTURE_URL)
+function getMediaQuery(query) {
+  return typeof window === 'undefined' ? null : window.matchMedia(query)
+}
 
-function useReducedMotion() {
-  const [reducedMotion, setReducedMotion] = useState(false)
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() => getMediaQuery(query)?.matches ?? false)
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const handleChange = () => setReducedMotion(media.matches)
+    const media = getMediaQuery(query)
+    if (!media) return undefined
 
+    const handleChange = () => setMatches(media.matches)
     handleChange()
-    media.addEventListener('change', handleChange)
-    return () => media.removeEventListener('change', handleChange)
+
+    if (media.addEventListener) {
+      media.addEventListener('change', handleChange)
+      return () => media.removeEventListener('change', handleChange)
+    }
+
+    media.addListener(handleChange)
+    return () => media.removeListener(handleChange)
+  }, [query])
+
+  return matches
+}
+
+function usePageVisibility() {
+  const [visible, setVisible] = useState(
+    () => typeof document === 'undefined' || document.visibilityState !== 'hidden',
+  )
+
+  useEffect(() => {
+    const handleVisibilityChange = () => setVisible(document.visibilityState !== 'hidden')
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
-  return reducedMotion
+  return visible
+}
+
+function useIntersection(targetRef, rootMargin) {
+  const [intersecting, setIntersecting] = useState(false)
+
+  useEffect(() => {
+    const target = targetRef.current
+    if (!target) return undefined
+
+    if (!('IntersectionObserver' in window)) {
+      setIntersecting(true)
+      return undefined
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIntersecting(entry.isIntersecting),
+      { rootMargin, threshold: 0.01 },
+    )
+
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [rootMargin, targetRef])
+
+  return intersecting
 }
 
 function isWebGLAvailable() {
+  if (typeof window === 'undefined') return false
+
   try {
     const canvas = document.createElement('canvas')
-    return Boolean(
-      window.WebGLRenderingContext &&
-        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')),
-    )
+    const context =
+      canvas.getContext('webgl2', { failIfMajorPerformanceCaveat: true }) ||
+      canvas.getContext('webgl', { failIfMajorPerformanceCaveat: true })
+
+    context?.getExtension('WEBGL_lose_context')?.loseContext()
+    return Boolean(context)
   } catch {
     return false
   }
 }
 
-class BadgeErrorBoundary extends Component {
+function prefersLightweightExperience() {
+  if (typeof navigator === 'undefined') return true
+
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
+  const limitedMemory = navigator.deviceMemory && navigator.deviceMemory <= 4
+  const limitedCpu = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2
+
+  return Boolean(connection?.saveData || limitedMemory || limitedCpu)
+}
+
+class SceneErrorBoundary extends Component {
   constructor(props) {
     super(props)
     this.state = { failed: false }
@@ -56,338 +106,90 @@ class BadgeErrorBoundary extends Component {
     return { failed: true }
   }
 
-  componentDidCatch(error) {
-    console.error('3D badge failed to render.', error)
+  componentDidCatch() {
+    this.props.onError()
   }
 
   render() {
-    if (this.state.failed) {
-      return <StaticBadgeFallback reason="3D badge fallback shown because the physics scene failed." />
-    }
-
-    return this.props.children
+    return this.state.failed ? null : this.props.children
   }
 }
 
-function BadgeCard({ portraitTexture }) {
+function StaticBadgeFallback() {
   return (
-    <group position={[0, 0.4, 0]}>
-      <RoundedBox args={[0.82, 1.18, 0.055]} radius={0.035} smoothness={8}>
-        <meshPhysicalMaterial
-          color="#050505"
-          roughness={0.3}
-          metalness={0.5}
-          clearcoat={1}
-          clearcoatRoughness={0.15}
-        />
-      </RoundedBox>
-
-      <mesh position={[0, -0.02, 0.034]}>
-        <planeGeometry args={[0.68, 1.0]} />
-        <meshBasicMaterial map={portraitTexture} toneMapped={false} />
-      </mesh>
-
-      <mesh position={[0, 0.68, 0.042]}>
-        <boxGeometry args={[0.36, 0.08, 0.055]} />
-        <meshStandardMaterial color="#d7d7d7" metalness={0.82} roughness={0.22} />
-      </mesh>
-
-      <mesh position={[0, 0.78, 0.047]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.13, 0.014, 12, 48]} />
-        <meshStandardMaterial color="#f4f4f4" metalness={0.9} roughness={0.16} />
-      </mesh>
-
-      <mesh position={[0, -0.61, 0.035]}>
-        <boxGeometry args={[0.64, 0.012, 0.01]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.32} />
-      </mesh>
-    </group>
-  )
-}
-
-function PhysicsBadge({ maxSpeed = 50, minSpeed = 10 }) {
-  const band = useRef(null)
-  const fixed = useRef(null)
-  const j1 = useRef(null)
-  const j2 = useRef(null)
-  const j3 = useRef(null)
-  const card = useRef(null)
-
-  const vec = new THREE.Vector3()
-  const ang = new THREE.Vector3()
-  const rot = new THREE.Vector3()
-  const dir = new THREE.Vector3()
-  const segmentProps = {
-    type: 'dynamic',
-    canSleep: true,
-    colliders: false,
-    angularDamping: 2,
-    linearDamping: 2,
-  }
-
-  const portraitTexture = useTexture(portraitUrl)
-  const bandTexture = useTexture(BAND_TEXTURE_URL)
-  const { width, height } = useThree((state) => state.size)
-  const [curve] = useState(
-    () =>
-      new THREE.CatmullRomCurve3([
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-      ]),
-  )
-  const [dragged, drag] = useState(false)
-  const [hovered, hover] = useState(false)
-
-  useEffect(() => {
-    portraitTexture.colorSpace = THREE.SRGBColorSpace
-    portraitTexture.anisotropy = 16
-    portraitTexture.minFilter = THREE.LinearMipmapLinearFilter
-    portraitTexture.magFilter = THREE.LinearFilter
-    portraitTexture.needsUpdate = true
-  }, [portraitTexture])
-
-  useEffect(() => {
-    bandTexture.wrapS = bandTexture.wrapT = THREE.RepeatWrapping
-    bandTexture.anisotropy = 16
-    bandTexture.needsUpdate = true
-  }, [bandTexture])
-
-  useRopeJoint(fixed, j1, [
-    [0, 0, 0],
-    [0, 0, 0],
-    1,
-  ])
-  useRopeJoint(j1, j2, [
-    [0, 0, 0],
-    [0, 0, 0],
-    1,
-  ])
-  useRopeJoint(j2, j3, [
-    [0, 0, 0],
-    [0, 0, 0],
-    1,
-  ])
-  useSphericalJoint(j3, card, [
-    [0, 0, 0],
-    [0, 1.45, 0],
-  ])
-
-  useEffect(() => {
-    if (!hovered) return undefined
-
-    document.body.style.cursor = dragged ? 'grabbing' : 'grab'
-    return () => {
-      document.body.style.cursor = 'auto'
-    }
-  }, [hovered, dragged])
-
-  useFrame((state, delta) => {
-    if (dragged) {
-      vec.set(state.pointer.x, state.pointer.y, 0.5).unproject(state.camera)
-      dir.copy(vec).sub(state.camera.position).normalize()
-      vec.add(dir.multiplyScalar(state.camera.position.length()))
-      ;[card, j1, j2, j3, fixed].forEach((ref) => ref.current?.wakeUp())
-      card.current?.setNextKinematicTranslation({
-        x: vec.x - dragged.x,
-        y: vec.y - dragged.y,
-        z: vec.z - dragged.z,
-      })
-    }
-
-    if (!fixed.current || !band.current) return
-
-    ;[j1, j2].forEach((ref) => {
-      if (!ref.current.lerped) {
-        ref.current.lerped = new THREE.Vector3().copy(ref.current.translation())
-      }
-
-      const clampedDistance = Math.max(
-        0.1,
-        Math.min(1, ref.current.lerped.distanceTo(ref.current.translation())),
-      )
-      ref.current.lerped.lerp(
-        ref.current.translation(),
-        delta * (minSpeed + clampedDistance * (maxSpeed - minSpeed)),
-      )
-    })
-
-    curve.points[0].copy(j3.current.translation())
-    curve.points[1].copy(j2.current.lerped)
-    curve.points[2].copy(j1.current.lerped)
-    curve.points[3].copy(fixed.current.translation())
-    band.current.geometry.setPoints(curve.getPoints(32))
-
-    ang.copy(card.current.angvel())
-    rot.copy(card.current.rotation())
-    card.current.setAngvel({ x: ang.x, y: ang.y - rot.y * 0.25, z: ang.z })
-  })
-
-  curve.curveType = 'chordal'
-
-  const handlePointerDown = (event) => {
-    event.stopPropagation()
-    event.target.setPointerCapture(event.pointerId)
-    drag(new THREE.Vector3().copy(event.point).sub(vec.copy(card.current.translation())))
-  }
-
-  const handlePointerUp = (event) => {
-    event.stopPropagation()
-    if (event.target.hasPointerCapture?.(event.pointerId)) {
-      event.target.releasePointerCapture(event.pointerId)
-    }
-    drag(false)
-  }
-
-  return (
-    <>
-      <group position={[-0.18, 4.7, 0]}>
-        <RigidBody ref={fixed} {...segmentProps} type="fixed" />
-        <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps}>
-          <BallCollider args={[0.1]} />
-        </RigidBody>
-        <RigidBody position={[1, 0, 0]} ref={j2} {...segmentProps}>
-          <BallCollider args={[0.1]} />
-        </RigidBody>
-        <RigidBody position={[1.5, 0, 0]} ref={j3} {...segmentProps}>
-          <BallCollider args={[0.1]} />
-        </RigidBody>
-        <RigidBody
-          position={[2, 0, 0]}
-          ref={card}
-          {...segmentProps}
-          type={dragged ? 'kinematicPosition' : 'dynamic'}
-        >
-          <CuboidCollider args={[0.8, 1.125, 0.01]} />
-          <group
-            scale={2.25}
-            position={[0, -1.2, -0.05]}
-            onPointerOver={() => hover(true)}
-            onPointerOut={() => hover(false)}
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-          >
-            <BadgeCard portraitTexture={portraitTexture} />
-          </group>
-        </RigidBody>
-      </group>
-      <mesh ref={band}>
-        <meshLineGeometry />
-        <meshLineMaterial
-          color="#ffffff"
-          depthTest={false}
-          transparent
-          opacity={0.88}
-          resolution={[width, height]}
-          useMap
-          map={bandTexture}
-          repeat={[-3, 1]}
-          lineWidth={1}
-        />
-      </mesh>
-    </>
-  )
-}
-
-function SceneLights() {
-  return (
-    <>
-      <ambientLight intensity={Math.PI * 0.86} />
-      <Physics interpolate gravity={[0, -40, 0]} timeStep={1 / 60}>
-        <PhysicsBadge />
-      </Physics>
-      <Environment background={false} blur={0.75}>
-        <color attach="background" args={['#050505']} />
-        <Lightformer
-          intensity={2}
-          color="white"
-          position={[0, -1, 5]}
-          rotation={[0, 0, Math.PI / 3]}
-          scale={[100, 0.1, 1]}
-        />
-        <Lightformer
-          intensity={3}
-          color="white"
-          position={[-1, -1, 1]}
-          rotation={[0, 0, Math.PI / 3]}
-          scale={[100, 0.1, 1]}
-        />
-        <Lightformer
-          intensity={3}
-          color="white"
-          position={[1, 1, 1]}
-          rotation={[0, 0, Math.PI / 3]}
-          scale={[100, 0.1, 1]}
-        />
-        <Lightformer
-          intensity={7}
-          color="white"
-          position={[-10, 0, 14]}
-          rotation={[0, Math.PI / 2, Math.PI / 3]}
-          scale={[100, 10, 1]}
-        />
-      </Environment>
-    </>
-  )
-}
-
-function StaticBadgeFallback({ reason }) {
-  return (
-    <div className="badge-static-fallback" role="img" aria-label="Static portrait badge fallback">
-      <span className="fallback-lanyard" aria-hidden="true" />
+    <div className="badge-static-fallback" aria-hidden="true">
+      <span className="fallback-lanyard" />
       <div className="fallback-card">
-        <img src={portraitUrl} alt="" width="220" height="320" draggable="false" />
+        <img
+          src={portraitUrl}
+          alt=""
+          width="600"
+          height="800"
+          decoding="async"
+          draggable="false"
+        />
       </div>
-      {reason ? <p className="badge-caption">{reason}</p> : null}
     </div>
   )
 }
 
 function Hero3DIDBadge() {
-  const reducedMotion = useReducedMotion()
-  const [webglSupported, setWebglSupported] = useState(true)
+  const stageRef = useRef(null)
+  const reducedMotion = useMediaQuery(REDUCED_MOTION_QUERY)
+  const useStaticBadge = useMediaQuery(STATIC_BADGE_QUERY)
+  const pageVisible = usePageVisibility()
+  const nearViewport = useIntersection(stageRef, '240px 0px')
+  const inViewport = useIntersection(stageRef, '0px')
+  const [webglSupported] = useState(isWebGLAvailable)
+  const [limitedDevice] = useState(prefersLightweightExperience)
+  const [loadScene, setLoadScene] = useState(false)
+  const [sceneReady, setSceneReady] = useState(false)
+  const [sceneFailed, setSceneFailed] = useState(false)
+  const handleSceneError = useCallback(() => setSceneFailed(true), [])
+  const handleSceneReady = useCallback(() => setSceneReady(true), [])
+
+  const eligibleFor3D =
+    webglSupported && !limitedDevice && !reducedMotion && !useStaticBadge && !sceneFailed
+  const sceneActive = eligibleFor3D && inViewport && pageVisible
 
   useEffect(() => {
-    setWebglSupported(isWebGLAvailable())
-  }, [])
+    if (!eligibleFor3D || !nearViewport || !pageVisible || loadScene) return undefined
 
-  if (!webglSupported) {
-    return (
-      <div className="badge-stage">
-        <StaticBadgeFallback reason="Static badge fallback shown because WebGL is unavailable." />
-      </div>
-    )
-  }
+    const startLoading = () => setLoadScene(true)
 
-  if (reducedMotion) {
-    return (
-      <div className="badge-stage">
-        <StaticBadgeFallback reason="Static badge fallback shown because reduced motion is enabled." />
-      </div>
-    )
-  }
+    if ('requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(startLoading, { timeout: 1200 })
+      return () => window.cancelIdleCallback(idleId)
+    }
+
+    const timeoutId = window.setTimeout(startLoading, 240)
+    return () => window.clearTimeout(timeoutId)
+  }, [eligibleFor3D, loadScene, nearViewport, pageVisible])
+
+  useEffect(() => {
+    if (!eligibleFor3D) setSceneReady(false)
+  }, [eligibleFor3D])
 
   return (
-      <div className="badge-stage" aria-label="Interactive draggable portrait badge with lanyard">
-      <BadgeErrorBoundary>
-        <Canvas
-          className="badge-canvas"
-          camera={{ position: [0, 0, 13], fov: 25 }}
-          dpr={[1, 1.5]}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-          gl={{
-            antialias: true,
-            alpha: true,
-            powerPreference: 'high-performance',
-          }}
-        >
+    <div
+      ref={stageRef}
+      className="badge-stage"
+      role="img"
+      aria-label="Portrait of Ashraf displayed on a developer ID badge"
+    >
+      {!sceneReady ? <StaticBadgeFallback /> : null}
+
+      {eligibleFor3D && loadScene ? (
+        <SceneErrorBoundary onError={handleSceneError}>
           <Suspense fallback={null}>
-            <SceneLights />
+            <PhysicsBadgeScene
+              active={sceneActive}
+              onError={handleSceneError}
+              onReady={handleSceneReady}
+            />
           </Suspense>
-        </Canvas>
-      </BadgeErrorBoundary>
+        </SceneErrorBoundary>
+      ) : null}
     </div>
   )
 }

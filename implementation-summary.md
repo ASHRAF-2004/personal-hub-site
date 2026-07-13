@@ -1,55 +1,33 @@
 # Implementation Summary
 
-## What Changed
+## Portfolio Experience
 
-- Refined the hero badge correction instead of redesigning the full portfolio.
-- Kept the existing portfolio content, project cards, CV buttons, skills, about, and contact sections.
-- Removed the visible bordered/boxed badge stage from the hero.
-- Increased the badge scene footprint and adjusted the camera/anchor positioning so the badge is a stronger hero focal point.
-- Reworked the badge physics setup to stay closer to the local `3D-event-badge-sandbox`:
-  - camera position `[0, 0, 13]`
-  - `fov: 25`
-  - gravity `[0, -40, 0]`
-  - three rope joints
-  - spherical joint to the card
-  - `kinematicPosition` dragging while held
-  - MeshLine lanyard rendering
-- Added a local brand-neutral lanyard texture at `public/band-neutral.png`.
+- Rebuilt the portfolio around a restrained night-sky identity with moonlight neutrals and one teal accent.
+- Reorganized the page into a focused recruiter path: hero, selected work, working principles, about, skills, resume, and contact.
+- Added a responsive mobile navigation menu, active section state, clear focus treatment, and a keyboard-accessible moon phase control.
+- Reduced the hero to two main actions while keeping GitHub, LinkedIn, and contact as lower-priority links.
+- Replaced unsupported project wording with verified public repository information and stronger project ordering.
 
-## Lanyard Texture
+## 3D Badge
 
-- The exact sandbox texture URL was tested and downloaded locally during implementation.
-- It visibly contains `Vercel Ship` branding and was blocked by the rendered browser check when loaded remotely.
-- To avoid showing copied Vercel branding on the portfolio, the live badge uses a local brand-neutral texture with the same MeshLine texture/repeat approach.
-- The original `band.jpg` file is not kept in the project.
+- Split the badge into a lightweight static shell and a separately imported physics scene.
+- Deferred Three.js and Rapier until the badge is near the viewport and the browser is idle.
+- Kept mobile, coarse-pointer, reduced-motion, data-saver, low-resource, and WebGL-failure paths static so they never request the physics scene.
+- Added offscreen and hidden-tab pausing, a lower DPR cap, simpler lighting and materials, thinner card geometry, gentler physics, bounded dragging, and pointer cleanup.
+- Replaced the allocation-heavy MeshLine curve with reusable textured strap segments.
 
-## Badge Content
+## Assets And Dependencies
 
-- The badge card uses `src/assets/my-image-processed.png`.
-- The card still avoids extra personal text and metadata.
-- No university, location, target role, stack, GitHub username, phone, email, student ID, or metadata labels are shown on the card.
+- Added optimized WebP derivatives for the portrait, lanyard, full moon, and new moon.
+- Imported resume PDFs and the lanyard through Vite instead of using deleted public paths.
+- Removed unused Drei and MeshLine dependencies.
+- Updated Vite, the React plugin, Rapier, and Lucide to audited versions.
 
-## Validation Summary
+## Validation
 
-- `npm.cmd run build` passed.
-- `dist/index.html` exists after build.
-- Rendered validation used Python Playwright with installed Microsoft Edge.
-- Desktop check confirmed:
-  - 3D canvas rendered
-  - badge stage border width is `0px`
-  - local lanyard texture returned HTTP 200
-  - 4 project cards rendered
-  - resume PDFs returned HTTP 200
-  - GitHub and LinkedIn links are present
-  - mouse drag was exercised against the badge scene
-- Mobile check confirmed:
-  - 3D canvas rendered
-  - 4 project cards rendered
-  - 5 hero buttons rendered
-  - no horizontal overflow
-  - badge stage border width is `0px`
-- Browser console returned no app errors.
-
-## Validation Caveat
-
-Playwright MCP could not be used because the expected Chrome installation is unavailable on this machine. Python Playwright with Microsoft Edge was used as the practical rendered validation path.
+- `npm run build` passes with Vite 8.1.4.
+- `npm audit` reports zero vulnerabilities.
+- Browser checks cover 320, 390, 768, 1280, 1440, and 1920 pixel widths.
+- No horizontal overflow, broken images, console errors, failed local requests, or layout shift were found.
+- Static mobile, reduced-motion, WebGL fallback, keyboard, download, internal link, external link, and 3D drag paths were exercised.
+- Production Lighthouse: performance 97, accessibility 100, best practices 100, SEO 100.

@@ -1,24 +1,13 @@
 # Known Limitations
 
-## Lanyard Asset
+## Deferred 3D Bundle
 
-- The exact original sandbox lanyard texture contains visible `Vercel Ship` branding.
-- The rendered browser check also blocked loading that remote image directly.
-- The live implementation therefore uses `public/band-neutral.png`, a local brand-neutral lanyard texture with the same MeshLine texture/repeat approach.
+The desktop physics scene remains a large optional download because it contains Three.js and Rapier. It is isolated in a dynamic chunk and is not preloaded by the initial document. Small screens, coarse pointers, reduced-motion users, data-saver or low-resource devices, and WebGL fallback users remain on the static badge and do not request this chunk.
 
-## Browser Validation
+## Automated LinkedIn Check
 
-- Playwright MCP could not run because Chrome is missing from the expected path.
-- Python Playwright with installed Microsoft Edge was used for desktop and mobile validation.
-- Headless Edge can differ slightly from a normal visible GPU-backed browser, especially for WebGL lighting and antialiasing.
+The LinkedIn profile URL resolves correctly but returns LinkedIn's automated-request block to headless validation. GitHub profile and repository links returned HTTP 200 during validation.
 
-## Build Output
+## Headless Rendering
 
-- `npm.cmd run build` passes.
-- Vite still reports large lazy-loaded 3D chunks from Three.js/Rapier.
-- The badge remains lazy-loaded so the main portfolio content is separated from the heavier 3D code.
-
-## Dependency Audit
-
-- The existing npm dependency tree previously reported audit findings.
-- No audit fix was run because this task was scoped to the badge correction.
+Rendered checks use installed Microsoft Edge in headless mode with software WebGL. Real GPU lighting and antialiasing can differ slightly, although the canvas pixel and drag checks confirm a nonblank interactive scene.

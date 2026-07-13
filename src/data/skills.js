@@ -1,26 +1,28 @@
 export const skillGroups = [
   {
     label: 'Languages',
-    skills: ['C++', 'Python', 'JavaScript', 'HTML', 'CSS'],
+    skills: ['Java', 'C++', 'Python', 'JavaScript', 'HTML', 'CSS'],
   },
   {
-    label: 'Frontend',
-    skills: ['React', 'HTML', 'CSS'],
+    label: 'Web',
+    skills: ['React', 'Three.js', 'React Three Fiber', 'FastAPI', 'REST APIs'],
   },
   {
-    label: 'Backend',
-    skills: ['FastAPI', 'Python'],
-  },
-  {
-    label: 'Databases',
-    skills: ['SQLite', 'MySQL', 'SQLAlchemy'],
+    label: 'Data & persistence',
+    skills: ['SQLite', 'MySQL', 'SQLAlchemy', 'CSV persistence'],
   },
   {
     label: 'Tools',
-    skills: ['Git', 'GitHub', 'VS Code', 'Docker', 'CMake', 'LaTeX'],
+    skills: ['Git', 'GitHub', 'Docker', 'Maven', 'CMake', 'LaTeX'],
   },
   {
-    label: 'Concepts',
-    skills: ['Object-Oriented Programming', 'REST API', 'Software Design', 'Database Design'],
+    label: 'Engineering',
+    skills: [
+      'Object-oriented programming',
+      'Software design',
+      'Layered architecture',
+      'Responsive design',
+      'Testing',
+    ],
   },
 ]
